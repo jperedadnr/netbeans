@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Derived from org.netbeans.swing.laf.flatlaf.ui.FlatTabControlIcon.
+  Canvas: 16x15.
+  Geometry at 1x scale:
+    center = (8, 7.5)
+    cross radius = 3.25
+    stroke width = 1
+
+  Default FlatLaf color in NetBeans is TabControlIcon.foreground=tint(@foreground,40%).
+  This SVG uses #666666, which matches the common FlatLaf Light case where @foreground is black.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" viewBox="0 0 16 15" fill="none">
+  <line x1="4.75" y1="4.25" x2="11.25" y2="10.75" stroke="#666666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="11.25" y1="4.25" x2="4.75" y2="10.75" stroke="#666666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+

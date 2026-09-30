@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Derived from org.netbeans.swing.laf.flatlaf.ui.FlatTabControlIcon.
+  Canvas: 16x15.
+  Background color from FlatLaf.properties:
+    TabControlIcon.close.rolloverBackground = #c74f50
+    TabControlIcon.close.rolloverForeground = #fff
+  Rounded rectangle corner radius corresponds to TabControlIcon.arc=2.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" viewBox="0 0 16 15" fill="none">
+  <rect x="0" y="0" width="16" height="15" rx="2" ry="2" fill="#c74f50"/>
+  <line x1="4.75" y1="4.25" x2="11.25" y2="10.75" stroke="#ffffff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="11.25" y1="4.25" x2="4.75" y2="10.75" stroke="#ffffff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+

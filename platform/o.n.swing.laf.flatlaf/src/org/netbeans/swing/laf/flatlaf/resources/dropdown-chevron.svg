@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SVG approximation of FlatTabControlIcon for ID_DROP_DOWN_BUTTON at 1x scale.
+  Source geometry from FlatTabControlIcon.paintIcon:
+    canvas: 16x16
+    points: (4,6) -> (8,10) -> (12,6)
+    stroke width: 1
+
+  Note: FlatLaf uses TabControlIcon.foreground for color at runtime.
+  This SVG uses #666666 as a light-theme friendly default.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <path d="M4 6 L8 10 L12 6" stroke="#666666" stroke-width="1" fill="none"/>
+</svg>
+
