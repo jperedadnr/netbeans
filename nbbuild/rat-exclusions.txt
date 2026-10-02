@@ -255,3 +255,6 @@ ide/properties.syntax/src/org/netbeans/modules/properties/syntax/PropertiesExamp
 
 ###### GitHub Issue tooling
 .github/**
+
+# NetBeansFX modules ported from github.com/gluonhq/NetBeansFX (Gluon sources, no ASF headers)
+nbfx/**

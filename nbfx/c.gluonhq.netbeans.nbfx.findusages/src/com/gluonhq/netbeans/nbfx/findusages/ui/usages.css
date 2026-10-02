@@ -1,0 +1,174 @@
+/* Usages view: inner query tabs, vertical tool bars, results tree. */
+
+.usages-view {
+    /* Same palette as the editor's codeeditor.css, whose looked-up colours are scoped to .code-editor. */
+    -code-keyword-color: #336BDD;
+    -code-string-color: #1E9347;
+    -code-comment-color: #969696;
+}
+
+.usages-empty {
+    -fx-text-fill: derive(-fx-text-base-color, 40%);
+    -fx-padding: 12;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.nbfx-tab-pane:usages-queries > .tab-header-area,
+.nbfx-tab-pane:usages-queries > .tab-header-area > .tab-header-background,
+.nbfx-tab-pane:usages-queries:top > .tab-header-area > .tab-header-background,
+.nbfx-tab-pane:usages-queries:focused > .tab-header-area > .tab-header-background,
+.nbfx-tab-pane:usages-queries:dock-focused > .tab-header-area > .tab-header-background,
+.nbfx-tab-pane:usages-queries:top:focused > .tab-header-area > .tab-header-background,
+.nbfx-tab-pane:usages-queries:top:dock-focused > .tab-header-area > .tab-header-background {
+    -fx-background-color: #F2F2F2, #F2F2F2;
+}
+
+.nbfx-tab-pane:usages-queries {
+    -fx-padding: 3 0 0 0;
+    -fx-background-color: #F2F2F2;
+}
+.nbfx-tab-pane:usages-queries:single {
+    -fx-padding: 0;
+}
+/* Hide the tab header while there is a single query. */
+.nbfx-tab-pane:usages-queries:single > .tab-header-area {
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+    -fx-max-height: 0;
+    -fx-padding: 0;
+    visibility: hidden;
+}
+
+.usages-query {
+    -fx-background-color: -fx-background;
+}
+
+/* Vertical tool bars: flat buttons, overflow menu when the pane is short. */
+.tool-bar.usages-toolbar {
+    -fx-padding: 3 2 3 2;
+    -fx-spacing: 2;
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent #D9D9D9 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.tool-bar.usages-toolbar > .container > .separator:horizontal {
+    -fx-padding: 2 0 2 0;
+    -fx-pref-width: 20;
+}
+
+.tool-bar.usages-toolbar > .container > .usages-tool-button,
+.tool-bar.usages-toolbar > .tool-bar-overflow-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 3;
+    -fx-content-display: graphic-only;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-pref-width: 24;
+    -fx-pref-height: 24;
+}
+
+/* The options menu button looks like the other tool buttons: icon only, no arrow. */
+.tool-bar.usages-toolbar > .container > .usages-options-button > .arrow-button {
+    -fx-padding: 0;
+}
+.tool-bar.usages-toolbar > .container > .usages-options-button > .arrow-button > .arrow {
+    -fx-padding: 0;
+    -fx-shape: null;
+    -fx-background-color: transparent;
+}
+.tool-bar.usages-toolbar > .container > .usages-options-button > .label {
+    -fx-padding: 0;
+}
+.tool-bar.usages-toolbar > .container > .usages-options-button:showing,
+.tool-bar.usages-toolbar > .container > .usages-options-button:selected {
+    -fx-background-color: #D0D0D0;
+}
+.tool-bar.usages-toolbar > .container > .usages-options-button:selected:hover {
+    -fx-background-color: #C4C4C4;
+}
+
+.tool-bar.usages-toolbar > .container > .usages-tool-button:hover,
+.tool-bar.usages-toolbar > .tool-bar-overflow-button:hover {
+    -fx-background-color: #E0E0E0;
+}
+
+.tool-bar.usages-toolbar > .container > .usages-tool-button:armed,
+.tool-bar.usages-toolbar > .container > .usages-tool-button:selected {
+    -fx-background-color: #D0D0D0;
+}
+
+.tool-bar.usages-toolbar > .container > .usages-tool-button:selected:hover {
+    -fx-background-color: #C4C4C4;
+}
+
+.tool-bar.usages-toolbar > .container > .usages-tool-button:disabled {
+    -fx-opacity: 0.4;
+}
+
+.usages-tree {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.usage-cell {
+    -fx-padding: 1 4 1 2;
+}
+
+.usage-cell:header {
+    -fx-translate-x: -20;
+}
+
+/* Usage rows are a TextFlow (bold occurrence), so the fill follows the tree's text colours by hand. */
+.usage-line .usage-text,
+.usage-line .usage-occurrence {
+    -fx-fill: black;
+}
+
+.usage-line .usage-occurrence {
+    -fx-font-weight: bold;
+}
+
+.usage-line .usage-line-number {
+    -fx-fill: #8C8C8C;
+}
+
+.usage-line .usage-keyword {
+    -fx-fill: -code-keyword-color;
+}
+
+.usage-line .usage-string {
+    -fx-fill: -code-string-color;
+}
+
+.usage-line .usage-comment {
+    -fx-fill: -code-comment-color;
+}
+
+.tree-view:focused > .virtual-flow > .clipped-container > .sheet > .usage-cell:selected:filled .usage-line > Text {
+    -fx-fill: white;
+}
+
+.usages-status {
+    -fx-padding: 4 8 4 8;
+    -fx-text-fill: derive(-fx-text-base-color, 30%);
+}
+
+.usages-status:error {
+    -fx-text-fill: #b00020;
+}
+
+/* The editor's root is transparent: give the preview the white of an editor tab. */
+.editor-preview {
+    -fx-background-color: white;
+}
+
+.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: #F2F2F2;
+    -fx-background-insets: 0;
+}

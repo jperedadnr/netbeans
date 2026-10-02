@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+OpenIDE-Module: com.gluonhq.netbeans.nbfx.file.actions
+OpenIDE-Module-Localizing-Bundle: com/gluonhq/netbeans/nbfx/file/actions/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+OpenIDE-Module-Java-Dependencies: Java > 25
+OpenIDE-Module-Provides: com.gluonhq.netbeans.nbfx.file.actions
+

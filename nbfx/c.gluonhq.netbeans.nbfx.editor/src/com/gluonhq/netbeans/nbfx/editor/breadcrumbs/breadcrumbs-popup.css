@@ -1,0 +1,75 @@
+/* Popup listing the children of a breadcrumb element */
+
+.breadcrumbs-popup-root {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+    -fx-background-radius: 6;
+    -fx-border-color: #C8CDD5;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-padding: 2;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 14, 0.2, 0, 3);
+}
+
+.breadcrumbs-popup-root > .breadcrumbs-popup-list {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-pref-width: 260;
+}
+
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar:vertical,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar:horizontal,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .corner {
+    -fx-background-color: transparent;
+}
+
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar:vertical,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar > .increment-button,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar > .decrement-button,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar > .increment-button > .increment-arrow,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar > .decrement-button > .decrement-arrow {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0em;
+    -fx-padding: 0 2 0 2;
+}
+
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar:horizontal > .increment-button,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar:horizontal > .decrement-button,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar:horizontal > .increment-button > .increment-arrow,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar:horizontal > .decrement-button > .decrement-arrow {
+    -fx-padding: 2 0 2 0;
+}
+
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar > .thumb {
+    -fx-background-color: #6B7280;
+    -fx-background-insets: 3 2 3 2;
+    -fx-background-radius: 16;
+}
+
+.breadcrumbs-popup-root > .breadcrumbs-popup-list > .virtual-flow > .scroll-bar:horizontal > .thumb {
+    -fx-background-insets: 2 3 2 3;
+}
+
+.breadcrumbs-popup-root > .breadcrumbs-popup-list .breadcrumbs-popup-cell {
+    -fx-background-color: transparent;
+    -fx-font-size: 0.9em;
+    -fx-text-fill: #1F2328;
+    -fx-padding: 2 8 2 8;
+}
+
+.breadcrumbs-popup-root > .breadcrumbs-popup-list .breadcrumbs-popup-cell:filled:hover {
+    -fx-background-color: #F3F7FB;
+}
+
+.breadcrumbs-popup-root > .breadcrumbs-popup-list .breadcrumbs-popup-cell:filled:selected,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list .breadcrumbs-popup-cell:filled:selected:hover,
+.breadcrumbs-popup-root > .breadcrumbs-popup-list .breadcrumbs-popup-cell:filled:focused:selected {
+    -fx-background-color: #DCEBFA;
+    -fx-text-fill: #0B57D0;
+}

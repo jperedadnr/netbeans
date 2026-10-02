@@ -1,0 +1,349 @@
+/* Find in Projects: the dialog form and, below, the Search view with its results panes. */
+
+.find-in-projects > .content {
+    -fx-padding: 0;
+}
+
+.search-pane {
+    -fx-min-width: 520;
+}
+
+/* Containing Text: the field is the combo holding the text area, which fills it edge to edge. */
+.search-pane .search-text-combo {
+    -fx-background-color: #C2C2C2, white;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 0;
+    -fx-padding: 1;
+}
+
+/* the area inside takes the focus, not the combo, so the field follows the area */
+.search-pane .search-text-combo:focus-within {
+    -fx-background-color: #4D90FE, white;
+}
+
+.search-pane .search-text-combo > .arrow-button {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-padding: 4 8 4 8;
+}
+
+.search-pane .search-text,
+.search-pane .search-text > .scroll-pane,
+.search-pane .search-text > .scroll-pane > .viewport,
+.search-pane .search-text > .scroll-pane > .viewport .content {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+}
+
+.search-pane .search-text .content {
+    -fx-padding: 4 6 4 6;
+}
+
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical,
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal {
+    -fx-padding: 0;
+}
+
+.search-pane .search-text > .scroll-pane > .corner,
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal,
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal:focused,
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical,
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical:focused {
+    -fx-background-color: #F5F5F5;
+}
+
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical > .track,
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal > .track,
+.search-pane .search-text > .scroll-pane > .corner {
+    -fx-background-insets: 0;
+}
+
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal > .track,
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical > .track {
+    -fx-background-color: #F5F5F5;
+    -fx-border-width: 0;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-background-insets: 0;
+}
+
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal:focused > .track,
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical:focused > .track {
+    -fx-background-color: #EDEDED;
+}
+
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal > .increment-button,
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal > .decrement-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0em;
+    -fx-padding: 5 0 5 0;
+}
+
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical > .increment-button,
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical > .decrement-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0em;
+    -fx-padding: 0 5 0 5;
+}
+
+.search-pane .search-text > .scroll-pane > .scroll-bar > .increment-button > .increment-arrow,
+.search-pane .search-text > .scroll-pane > .scroll-bar > .decrement-button > .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal > .thumb,
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical > .thumb {
+    -fx-background-color: transparent, #CFCFCF;
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 20;
+}
+
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal:hover > .thumb,
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical:hover > .thumb {
+    -fx-background-color: transparent, #B6B6B6;
+}
+
+.search-pane .search-text > .scroll-pane > .scroll-bar:horizontal:pressed > .thumb,
+.search-pane .search-text > .scroll-pane > .scroll-bar:vertical:pressed > .thumb {
+    -fx-background-color: transparent, #9C9C9C;
+}
+
+.search-pane .search-hint {
+    -fx-text-fill: derive(-fx-text-base-color, 40%);
+    -fx-font-size: 0.92em;
+}
+
+.search-pane .search-status {
+    -fx-text-fill: derive(-fx-text-base-color, 40%);
+    -fx-font-size: 0.92em;
+}
+
+.search-pane .search-status:error {
+    -fx-text-fill: #C62828;
+}
+
+/* ---- Search view: inner result tabs, vertical tool bar, results table (PR 3) ---- */
+
+.search-empty {
+    -fx-text-fill: derive(-fx-text-base-color, 40%);
+    -fx-padding: 12;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.nbfx-tab-pane:search-results > .tab-header-area,
+.nbfx-tab-pane:search-results > .tab-header-area > .tab-header-background,
+.nbfx-tab-pane:search-results:top > .tab-header-area > .tab-header-background,
+.nbfx-tab-pane:search-results:focused > .tab-header-area > .tab-header-background,
+.nbfx-tab-pane:search-results:dock-focused > .tab-header-area > .tab-header-background,
+.nbfx-tab-pane:search-results:top:focused > .tab-header-area > .tab-header-background,
+.nbfx-tab-pane:search-results:top:dock-focused > .tab-header-area > .tab-header-background {
+    -fx-background-color: #F2F2F2, #F2F2F2;
+}
+
+.nbfx-tab-pane:search-results {
+    -fx-padding: 3 0 0 0;
+    -fx-background-color: #F2F2F2;
+}
+.nbfx-tab-pane:search-results:single {
+    -fx-padding: 0;
+}
+/* Hide the tab header while there is a single search. */
+.nbfx-tab-pane:search-results:single > .tab-header-area {
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+    -fx-max-height: 0;
+    -fx-padding: 0;
+    visibility: hidden;
+}
+
+.search-results {
+    -fx-background-color: -fx-background;
+}
+
+/* The vertical tool bar: flat buttons, overflow menu when the pane is short. */
+.tool-bar.search-toolbar {
+    -fx-padding: 3 2 3 2;
+    -fx-spacing: 2;
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent #D9D9D9 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.tool-bar.search-toolbar > .container > .separator:horizontal {
+    -fx-padding: 2 0 2 0;
+    -fx-pref-width: 20;
+}
+
+.tool-bar.search-toolbar > .container > .search-tool-button,
+.tool-bar.search-toolbar > .tool-bar-overflow-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 3;
+    -fx-content-display: graphic-only;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-pref-width: 24;
+    -fx-pref-height: 24;
+}
+
+.tool-bar.search-toolbar > .container > .search-tool-button:hover,
+.tool-bar.search-toolbar > .tool-bar-overflow-button:hover {
+    -fx-background-color: #E0E0E0;
+}
+
+.tool-bar.search-toolbar > .container > .search-tool-button:armed,
+.tool-bar.search-toolbar > .container > .search-tool-button:selected {
+    -fx-background-color: #D0D0D0;
+}
+
+.tool-bar.search-toolbar > .container > .search-tool-button:selected:hover {
+    -fx-background-color: #C4C4C4;
+}
+
+.tool-bar.search-toolbar > .container > .search-tool-button:disabled {
+    -fx-opacity: 0.4;
+}
+
+/* The results table. */
+.search-results-table {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.search-results-table .result-cell {
+    -fx-padding: 1 4 1 2;
+}
+
+/* Summary and detail rows are TextFlows (bold occurrence): their fill follows the table's text colours by hand. */
+.result-summary .result-text,
+.result-summary .result-occurrence,
+.result-line .result-text,
+.result-line .result-occurrence {
+    -fx-fill: -fx-text-base-color;
+}
+
+.result-summary .result-occurrence,
+.result-line .result-occurrence {
+    -fx-font-weight: bold;
+}
+
+.result-line .result-line-number,
+.result-line .result-line-column {
+    -fx-fill: #8C8C8C;
+}
+
+.result-summary .result-issues-link {
+    -fx-padding: 0;
+    -fx-border-width: 0;
+    -fx-underline: true;
+}
+
+.tree-table-view:focused > .virtual-flow > .clipped-container > .sheet > .tree-table-row-cell:selected:filled > .tree-table-cell > HBox > .result-line > Text,
+.tree-table-view:focused > .virtual-flow > .clipped-container > .sheet > .tree-table-row-cell:selected:filled > .tree-table-cell > HBox > .result-summary > Text {
+    -fx-fill: white;
+}
+
+.search-results-status {
+    -fx-padding: 4 8 4 8;
+    -fx-text-fill: derive(-fx-text-base-color, 30%);
+}
+
+.search-results-status:error {
+    -fx-text-fill: #b00020;
+}
+
+/* Replace search */
+.search-results .search-replace-footer {
+    -fx-padding: 2 8 2 0;
+}
+
+.search-results .result-cell .result-check {
+    -fx-padding: 0;
+}
+
+.search-results .result-cell .result-check > .box {
+    -fx-padding: 2;
+}
+
+.search-results .result-cell .result-check:indeterminate > .box > .mark {
+    -fx-padding: 0.416667em 0.416667em 0.5em 0.5em;
+}
+
+.search-results .split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: #F2F2F2;
+    -fx-background-insets: 0;
+}
+
+/* Warnings and Errors dialog */
+.search-issues > .content {
+    -fx-padding: 0;
+}
+
+.search-issues .table-view {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.search-issues .table-view .table-cell {
+    -fx-padding: 1 4 1 2;
+}
+.search-results .editor-preview {
+    -fx-background-color: white;
+}
+
+.search-pane .search-link {
+    -fx-padding: 0 0 0 2;
+    -fx-border-width: 0;
+    -fx-text-fill: #2775BF;
+}
+
+.search-ignore-list > .content {
+    -fx-padding: 12;
+}
+
+.search-ignore-list .list-view {
+    -fx-background-color: #C2C2C2, white;
+    -fx-background-insets: 0, 1;
+}
+.search-ignore-list .list-view:focus-within:focused {
+    -fx-background-color: #4D90FE, white;
+    -fx-background-insets: 0, 1;
+}
+
+.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:hover,
+.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:focused:filled,
+.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:focused:filled:hover,
+.search-ignore-list .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell:focused:filled {
+    -fx-text-fill: black;
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
+.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:hover,
+.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:focused,
+.search-ignore-list .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
+.search-ignore-list .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:focused {
+    -fx-text-fill: white;
+    -fx-background: #2775BF;
+    -fx-background-color: #2775BF;
+    -fx-background-insets: 0;
+}
+
+.search-pane.content > .text-input {
+    -fx-background: white;
+    -fx-background-color: #C2C2C2, white;
+    -fx-background-insets: 0, 1;
+}
+
+.search-pane.content > .text-input:focused {
+    -fx-background-color: #2775BF, white;
+    -fx-background-insets: 0, 1;
+}

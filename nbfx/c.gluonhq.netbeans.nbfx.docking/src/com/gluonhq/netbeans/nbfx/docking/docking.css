@@ -1,0 +1,29 @@
+/* Default look of a DockArea; applications override these in their own stylesheets. */
+
+.nbfx-dock-area, .nbfx-dock-split {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+/* The line along the edge of a pane (or of the whole area) where a drop docks the dragged tab in
+   a new pane. Drawn over the panes by the dock area, so it never moves them. */
+.nbfx-drop-line {
+    -fx-border-color: red;
+    -fx-border-width: 4 0 0 0;
+    -fx-border-style: segments(10, 6);
+    -fx-border-insets: 0;
+}
+.nbfx-drop-line:vertical {
+    -fx-border-width: 0 0 0 4;
+}
+/* The frame around a pane a component would join (a keyboard-driven move). */
+.nbfx-drop-line:frame {
+    -fx-border-width: 4;
+}
+
+.nbfx-dock-split.split-pane:vertical > .split-pane-divider,
+.nbfx-dock-split.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: #F2F2F2;
+    -fx-background-insets: 0;
+}

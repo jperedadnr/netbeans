@@ -77,3 +77,5 @@ nbbuild/installer/jnlp/external/*
 # Simple Rust empty template project
 rust/rust.project/src/org/netbeans/modules/rust/project/templates/RustProjectTemplateProject.zip
 
+# NetBeansFX: JavaFX runtime bundled by the nbfx cluster
+nbfx/c.gluonhq.netbeans.nbfx.lib.javafx/release/modules/ext/*.jar
