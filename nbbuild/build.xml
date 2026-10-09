@@ -1172,12 +1172,19 @@ PKGINST=${pkg.svr4.pkginst}</echo>
     <antcall target="tryme"/>
   </target>
   
-  <target name="tryme" depends="-load-build-properties,tryme-setup-debug-args,-jdk-init"
+  <target name="tryme" depends="-load-build-properties,init-tasks,-load-module-flags,tryme-setup-debug-args,-jdk-init"
           description="Try running the IDE interactively.
 It is possible to use -Ddebug.port=3234 -Ddebug.pause=y to start the system in debug mode" 
    >
     <taskdef name="mergetrymeargs" classname="org.netbeans.nbbuild.MergeTrymeArgs" classpath="${nbantext.jar}"/>
     <mergetrymeargs/>
+    <!-- Pass the built cluster list and the JMS add-opens/add-exports flags, as bin/netbeans does,
+         so tryme works on JDK 16+ even when the launcher cluster is not built. -->
+    <resolvelist name="tryme.clusters.dirs" list="${clusters.config.nbfx.list}">
+        <mapper type="glob" from="*" to="*.dir"/>
+    </resolvelist>
+    <dirset id="tryme.clusters.set" dir="${netbeans.dest.dir}" includes="${tryme.clusters.dirs}"/>
+    <pathconvert property="tryme.clusters" refid="tryme.clusters.set" pathsep=":"/>
     <property name="tryme.jdkhome" value="${nbjdk.home}"/>
     <property name="tryme.debug.args" value="" />
     <property environment="env"/>
@@ -1193,15 +1200,15 @@ It is possible to use -Ddebug.port=3234 -Ddebug.pause=y to start the system in d
         </or>
     </condition>
 
-    <condition property="tryme.launcher.prefix" value="${netbeans.dest.dir}/bin/netbeans" else="${netbeans.dest.dir}/platform/lib/nbexec">
-      <available file="${netbeans.dest.dir}/nb/.lastModified" />
-    </condition>
+    <property name="tryme.launcher.prefix" value="${netbeans.dest.dir}/platform/lib/nbexec"/>
     <property name="run.args.ide" value=""/>
     <exec osfamily="windows" executable="${tryme.launcher.prefix}${jvm.arch.string}.exe" failonerror="yes" dir="${java.io.tmpdir}">
       <arg value="--jdkhome"/>
       <arg file="${tryme.jdkhome}"/>
       <arg value="--userdir"/>
       <arg file="${test.user.dir}"/>
+      <arg line="${metabuild.jms-flags}"/>
+      <arg line="--clusters ${tryme.clusters}"/>
       <arg line="${tryme.args}"/>
       <arg line="${tryme.debug.args}" />
       <arg line="${run.args.ide}"/>
@@ -1212,6 +1219,8 @@ It is possible to use -Ddebug.port=3234 -Ddebug.pause=y to start the system in d
       <arg file="${tryme.jdkhome}"/>
       <arg value="--userdir"/>
       <arg file="${test.user.dir}"/>
+      <arg line="${metabuild.jms-flags}"/>
+      <arg line="--clusters ${tryme.clusters}"/>
       <arg line="${tryme.args}"/>
       <arg line="${tryme.debug.args}" />
       <arg line="${run.args.ide}"/>

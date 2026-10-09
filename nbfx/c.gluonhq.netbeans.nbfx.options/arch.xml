@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE api-answers PUBLIC "-//NetBeans//DTD Arch Answers//EN" "../../nbbuild/antsrc/org/netbeans/nbbuild/Arch.dtd" [
+  <!ENTITY api-questions SYSTEM "../../nbbuild/antsrc/org/netbeans/nbbuild/Arch-api-questions.xml">
+]>
+
+<api-answers
+  question-version="1.29"
+  author="sven"
+>
+
+  &api-questions;
+
+  <answer id="arch-what">
+    <p>
+      The <b>nbfx Options API</b> provides the pure-JavaFX Options dialog: the
+      <a href="@TOP@/com/gluonhq/netbeans/nbfx/options/FxOptionsPanel.html">FxOptionsPanel</a> SPI,
+      the registry that discovers panels from the layer, and the dialog that runs them.
+    </p>
+  </answer>
+
+  <answer id="arch-overall">
+    <p>
+      Panels are declared with <code>@FxOptionsRegistration</code> and discovered from
+      <code>NbFx/Options</code>. <code>FxOptionsDialog</code> shows a category list and the selected
+      panel, with OK / Apply / Cancel driving <code>load</code>, <code>apply</code> and
+      <code>cancel</code>.
+    </p>
+  </answer>
+
+  <answer id="arch-usecases">
+    <ul>
+      <li>The Editor panel toggles line numbers and breadcrumbs.</li>
+      <li>Other modules add panels for their own settings.</li>
+    </ul>
+  </answer>
+
+  <answer id="arch-quality">
+    <p>The registry is unit-tested. The API is under development until the MVP freeze.</p>
+  </answer>
+
+  <answer id="dep-jrejdk">
+    <p>A JDK is required only to compile; JavaFX is provided by the runtime.</p>
+  </answer>
+
+  <answer id="deploy-packages">
+    <p>Only <code>com.gluonhq.netbeans.nbfx.options</code> is public.</p>
+  </answer>
+
+  <answer id="lookup-lookup">
+    <p>Panels are read from the configuration filesystem under <code>NbFx/Options</code>.</p>
+  </answer>
+
+  <answer id="lookup-register">
+    <p>None.</p>
+  </answer>
+
+  <answer id="resources-layer">
+    <p>Reads <code>NbFx/Options</code>, written by the nbfx annotations processors.</p>
+  </answer>
+
+  <answer id="resources-read">
+    <p><code>NbFx/Options</code>, as above.</p>
+  </answer>
+
+  <answer id="resources-preferences">
+    <p>Panels persist through the services they configure (for example the editor settings).</p>
+  </answer>
+
+  <answer id="exec-threading">
+    <p>Building panels and showing the dialog run on the JavaFX Application Thread.</p>
+  </answer>
+
+  <answer id="perf-startup">
+    <p>No code runs on startup.</p>
+  </answer>
+
+  <answer id="perf-exit">
+    <p>No code runs on exit.</p>
+  </answer>
+
+  <answer id="default">
+    <p>No special requirements.</p>
+  </answer>
+
+</api-answers>

@@ -9,6 +9,9 @@ public final class ActionIds {
     /** Creates a new project. */
     public static final String NEW_PROJECT = "newProject";
 
+    /** Creates a new file from a template. */
+    public static final String NEW_FILE = "newFile";
+
     /** Opens an existing project. */
     public static final String OPEN_PROJECT = "openProject";
 
@@ -109,8 +112,59 @@ public final class ActionIds {
     public static final String REPLACE_IN_PROJECTS = "replaceInProjects";
     /** Shows and selects the Search Results view (Window menu). */
     public static final String SELECT_SEARCH_RESULTS = "selectSearchResults";
+
+    /** Shows and selects the Output view (Window menu). */
+    public static final String SELECT_OUTPUT = "selectOutput";
+
+    /** Shows and selects the Plugins view (Window menu). */
+    public static final String SELECT_PLUGINS = "selectPlugins";
+
+    /** Opens the Options dialog (Window menu). */
+    public static final String SELECT_OPTIONS = "selectOptions";
+
+    /** Shows and selects the Git view (Window menu). */
+    public static final String SELECT_GIT = "selectGit";
+
+    /** Debugs the active file. */
+    public static final String DEBUG_FILE = "debugFile";
+
+    /** Toggles a breakpoint on the active editor's current line. */
+    public static final String TOGGLE_BREAKPOINT = "toggleBreakpoint";
+
+    /** Resumes the running debug session. */
+    public static final String DEBUG_CONTINUE = "debugContinue";
+
+    /** Steps over in the running debug session. */
+    public static final String DEBUG_STEP_OVER = "debugStepOver";
+
+    /** Steps into in the running debug session. */
+    public static final String DEBUG_STEP_INTO = "debugStepInto";
+
+    /** Steps out in the running debug session. */
+    public static final String DEBUG_STEP_OUT = "debugStepOut";
+
+    /** Stops the running debug session. */
+    public static final String DEBUG_STOP = "debugStop";
     /** Find... on a folder of the Projects view: opens the search dialog scoped to the selected folders. */
     public static final String FILE_FIND = "file.find";
+
+    /** Builds the selected project with its build tool. */
+    public static final String BUILD = "build";
+
+    /** Cleans and then builds the selected project. */
+    public static final String CLEAN_BUILD = "cleanBuild";
+
+    /** Cleans the selected project's build output. */
+    public static final String CLEAN = "clean";
+
+    /** Runs the selected project's tests. */
+    public static final String TEST = "test";
+
+    /** Runs the selected project. */
+    public static final String RUN = "run";
+
+    /** Generates the selected project's javadoc. */
+    public static final String JAVADOC = "javadoc";
 
     private ActionIds() {
     }

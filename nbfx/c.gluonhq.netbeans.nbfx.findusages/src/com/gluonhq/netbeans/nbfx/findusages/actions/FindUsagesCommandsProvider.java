@@ -3,7 +3,6 @@ package com.gluonhq.netbeans.nbfx.findusages.actions;
 import com.gluonhq.netbeans.nbfx.api.actions.ActionIds;
 import com.gluonhq.netbeans.nbfx.api.actions.Command;
 import com.gluonhq.netbeans.nbfx.api.actions.CommandsProvider;
-import com.gluonhq.netbeans.nbfx.api.actions.EditorContextMenuIds;
 import com.gluonhq.netbeans.nbfx.api.editor.EditorContext;
 import com.gluonhq.netbeans.nbfx.api.editor.EditorDocument;
 import com.gluonhq.netbeans.nbfx.findusages.model.UsagesModel;
@@ -37,9 +36,6 @@ public class FindUsagesCommandsProvider implements CommandsProvider {
         if (context == null || model == null) {
             LOG.warning("No EditorContext or UsagesModel found; Find Usages actions will not be registered");
             return List.of();
-        }
-        if (!EditorContextMenuIds.ids().contains(ActionIds.FIND_USAGES)) {
-            EditorContextMenuIds.add(EditorContextMenuIds.SEPARATOR, ActionIds.FIND_USAGES);
         }
         return List.of(
                 new FindUsagesCommand(context.activeDocumentProperty(), model),

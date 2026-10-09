@@ -1,8 +1,10 @@
 package com.gluonhq.netbeans.nbfx.editor.codearea;
 
+import com.gluonhq.netbeans.nbfx.api.actions.ActionLayerReader;
 import com.gluonhq.netbeans.nbfx.api.actions.ActionRegistry;
 import com.gluonhq.netbeans.nbfx.api.actions.Command;
 import com.gluonhq.netbeans.nbfx.api.actions.EditorContextMenuIds;
+import com.gluonhq.netbeans.nbfx.api.actions.FxActionRef;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.scene.control.ContextMenu;
@@ -55,21 +57,40 @@ final class EditorContextMenu {
     private static void rebuild(ContextMenu menu) {
         ActionRegistry registry = Lookup.getDefault().lookup(ActionRegistry.class);
         List<MenuItem> items = new ArrayList<>();
-        boolean pendingSeparator = false;
-        for (String id : EditorContextMenuIds.ids()) {
-            if (EditorContextMenuIds.SEPARATOR.equals(id)) {
-                pendingSeparator = !items.isEmpty();
-                continue;
+        List<FxActionRef> refs = ActionLayerReader.read("NbFx/ContextMenus/Editor");
+        if (!refs.isEmpty()) {
+            boolean pendingSeparator = false;
+            for (FxActionRef ref : refs) {
+                if (ref.separatorBefore()) {
+                    pendingSeparator = !items.isEmpty();
+                }
+                Command command = registry == null ? null : registry.find(ref.actionId()).orElse(null);
+                if (command == null) {
+                    continue;
+                }
+                if (pendingSeparator) {
+                    items.add(new SeparatorMenuItem());
+                    pendingSeparator = false;
+                }
+                items.add(itemFor(command));
             }
-            Command command = registry == null ? null : registry.find(id).orElse(null);
-            if (command == null) {
-                continue;
+        } else {
+            boolean pendingSeparator = false;
+            for (String id : EditorContextMenuIds.ids()) {
+                if (EditorContextMenuIds.SEPARATOR.equals(id)) {
+                    pendingSeparator = !items.isEmpty();
+                    continue;
+                }
+                Command command = registry == null ? null : registry.find(id).orElse(null);
+                if (command == null) {
+                    continue;
+                }
+                if (pendingSeparator) {
+                    items.add(new SeparatorMenuItem());
+                    pendingSeparator = false;
+                }
+                items.add(itemFor(command));
             }
-            if (pendingSeparator) {
-                items.add(new SeparatorMenuItem());
-                pendingSeparator = false;
-            }
-            items.add(itemFor(command));
         }
         menu.getItems().setAll(items);
     }

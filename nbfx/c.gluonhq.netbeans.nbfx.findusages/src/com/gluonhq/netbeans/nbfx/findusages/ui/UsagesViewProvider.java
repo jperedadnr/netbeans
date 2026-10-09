@@ -1,5 +1,7 @@
 package com.gluonhq.netbeans.nbfx.findusages.ui;
 
+import com.gluonhq.netbeans.nbfx.annotations.FxViewLocation;
+import com.gluonhq.netbeans.nbfx.annotations.FxViewRegistration;
 import com.gluonhq.netbeans.nbfx.api.view.DockLocation;
 import com.gluonhq.netbeans.nbfx.api.view.ViewManager;
 import com.gluonhq.netbeans.nbfx.api.view.ViewProvider;
@@ -15,6 +17,8 @@ import org.openide.util.lookup.ServiceProvider;
  * holds the results of every Find Usages query as inner tabs.
  */
 @ServiceProvider(service = ViewProvider.class)
+@FxViewRegistration(id = UsagesViewProvider.ID, displayName = "Usages",
+        location = FxViewLocation.CENTER_BOTTOM, position = 20)
 public final class UsagesViewProvider implements ViewProvider {
 
     /** The stable id of the view, used by the layout persistence and {@link ViewManager}. */

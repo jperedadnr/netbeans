@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+OpenIDE-Module: com.gluonhq.netbeans.nbfx.macos
+OpenIDE-Module-Localizing-Bundle: com/gluonhq/netbeans/nbfx/macos/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+OpenIDE-Module-Java-Dependencies: Java > 25
+OpenIDE-Module-Requires: org.openide.modules.os.MacOSX

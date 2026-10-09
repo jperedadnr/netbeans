@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xml" href="../../nbbuild/javadoctools/apichanges.xsl"?>
+<!DOCTYPE apichanges PUBLIC "-//NetBeans//DTD API changes list 1.0//EN" "../../nbbuild/javadoctools/apichanges.dtd">
+<apichanges>
+    <apidefs>
+        <apidef name="nbfx_project_customizer">NetBeansFX Project Customizer API</apidef>
+    </apidefs>
+    <changes>
+        <change id="projectcustomizer.spi">
+            <api name="nbfx_project_customizer"/>
+            <summary>Registerable project-properties categories.</summary>
+            <version major="1" minor="0"/>
+            <date day="9" month="10" year="2026"/>
+            <author login="sven"/>
+            <compatibility addition="yes" semantic="compatible"/>
+            <description>Registerable project-properties categories. Under development until the MVP freeze.</description>
+            <class package="com.gluonhq.netbeans.nbfx.project.customizer" name="FxProjectCustomizerPanel"/>
+            <class package="com.gluonhq.netbeans.nbfx.project.customizer" name="FxProjectCustomizers"/>
+        </change>
+    </changes>
+    <htmlcontents>
+        <head>
+            <title>Change History for the NetBeansFX Project Customizer API</title>
+        </head>
+        <body>
+            <p class="overviewlink"><a href="overview-summary.html">Overview</a></p>
+            <h1>Introduction</h1>
+            <p>This document lists changes made to the <a href="@TOP@">NetBeansFX Project Customizer API</a>.</p>
+            <hr/><standard-changelists module-code-name="com.gluonhq.netbeans.nbfx.project.customizer"/>
+            <hr/><p>@FOOTER@</p>
+        </body>
+    </htmlcontents>
+</apichanges>

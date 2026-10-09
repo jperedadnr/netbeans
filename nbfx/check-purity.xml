@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<!--
+    Purity guardrail for the pure-JavaFX nbfx cluster.
+
+    Checks that no nbfx module imports a forbidden (Swing/AWT/legacy-window) package and that no
+    nbfx module declares a direct dependency on a forbidden module. Run with:
+
+        ant -f nbfx/check-purity.xml
+
+    By default violations are reported but do not fail the build (existing modules are
+    grandfathered while they are migrated). Pass -Dnbfx.purity.strict=true to fail on any violation:
+
+        ant -f nbfx/check-purity.xml -Dnbfx.purity.strict=true
+-->
+<project basedir="." default="check-purity" name="nbfx-purity">
+
+    <property name="nbfx.purity.strict" value="false"/>
+    <property name="nbfx.src.pattern" value="*/src/**/*.java"/>
+    <property name="nbfx.deps.pattern" value="*/nbproject/project.xml"/>
+    <property name="nbfx.jar.pattern" value="com-gluonhq-netbeans-nbfx-*.jar"/>
+    <property name="nbfx.jar.dir" value="../nbbuild/netbeans/nbfx/modules"/>
+
+    <!-- Forbidden imports in nbfx sources. -->
+    <target name="check-sources">
+        <resourcecount property="src.violations">
+            <fileset dir="${basedir}" includes="${nbfx.src.pattern}">
+                <!-- Quarantined: hides the Swing main window until the window system is fully
+                     replaced. Must not be used by any other nbfx code. -->
+                <exclude name="**/SwingWindowSuppressor.java"/>
+                <!-- Quarantined: the macOS application menu (Preferences/Quit) has no JavaFX API;
+                     the only mechanism is the AWT Desktop handlers, routing to the FX dialogs. -->
+                <exclude name="**/MacApplicationMenu.java"/>
+                <!-- Headless expression SPI (AccessibilityQueryImplementation2.Result) uses the
+                     javax.swing.event.ChangeListener listener type; no UI is involved. -->
+                <exclude name="**/ProjectModuleInfoAccessibilityQuery.java"/>
+                <or>
+                    <contains text="import javax.swing"/>
+                    <contains text="import java.awt"/>
+                    <contains text="import javafx.embed.swing"/>
+                    <contains text="import org.openide.awt"/>
+                    <contains text="import org.openide.nodes"/>
+                    <contains text="import org.openide.explorer"/>
+                    <contains text="import org.openide.windows"/>
+                    <contains text="import org.openide.dialogs"/>
+                </or>
+            </fileset>
+        </resourcecount>
+        <echo message="[purity] forbidden-import violations: ${src.violations}"/>
+    </target>
+
+    <!-- Forbidden module dependencies in nbfx project.xml files. -->
+    <target name="check-dependencies">
+        <resourcecount property="dep.violations">
+            <fileset dir="${basedir}" includes="${nbfx.deps.pattern}">
+                <!-- The launcher bootstrap still requires org.openide.windows for the quarantined
+                     Swing-window suppression above. -->
+                <exclude name="c.gluonhq.netbeans.nbfx.launcher/nbproject/project.xml"/>
+                <!-- The UI module still bridges open/close to the platform via OpenProjects
+                     (projectuiapi.base); to be replaced by the nbfx-native project model. -->
+                <exclude name="c.gluonhq.netbeans.nbfx.ui/nbproject/project.xml"/>
+                <or>
+                    <contains text="org.openide.awt"/>
+                    <contains text="org.openide.nodes"/>
+                    <contains text="org.openide.explorer"/>
+                    <contains text="org.openide.windows"/>
+                    <contains text="org.openide.dialogs"/>
+                    <contains text="org.netbeans.core.windows"/>
+                    <contains text="org.netbeans.modules.projectuiapi.base"/>
+                </or>
+            </fileset>
+        </resourcecount>
+        <echo message="[purity] forbidden-dependency violations: ${dep.violations}"/>
+    </target>
+
+    <!-- Forbidden bundled classes in the built nbfx JARs (Swing/AWT). -->
+    <target name="check-jars">
+        <apply executable="${java.home}/bin/jar" outputproperty="nbfx.jar.contents"
+               failonerror="false" parallel="false" dir="${basedir}">
+            <fileset dir="${nbfx.jar.dir}" includes="${nbfx.jar.pattern}"/>
+            <arg value="tf"/>
+            <srcfile/>
+        </apply>
+        <condition property="jar.violations" value="1" else="0">
+            <or>
+                <contains string="${nbfx.jar.contents}" substring="javax/swing/"/>
+                <contains string="${nbfx.jar.contents}" substring="java/awt/"/>
+            </or>
+        </condition>
+        <echo message="[purity] forbidden bundled-class violations: ${jar.violations}"/>
+    </target>
+
+    <target name="check-purity" depends="check-sources,check-dependencies,check-jars">
+        <fail message="[purity] ${src.violations} forbidden import(s), ${dep.violations} forbidden dependency(ies) and ${jar.violations} forbidden bundled-class violation(s) found under nbfx;">
+            <condition>
+                <and>
+                    <equals arg1="${nbfx.purity.strict}" arg2="true"/>
+                    <or>
+                        <not><equals arg1="${src.violations}" arg2="0"/></not>
+                        <not><equals arg1="${dep.violations}" arg2="0"/></not>
+                        <not><equals arg1="${jar.violations}" arg2="0"/></not>
+                    </or>
+                </and>
+            </condition>
+        </fail>
+        <echo message="[purity] OK (strict=${nbfx.purity.strict})"/>
+    </target>
+
+</project>

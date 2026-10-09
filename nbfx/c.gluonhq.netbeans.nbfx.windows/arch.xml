@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE api-answers PUBLIC "-//NetBeans//DTD Arch Answers//EN" "../../nbbuild/antsrc/org/netbeans/nbbuild/Arch.dtd" [
+  <!ENTITY api-questions SYSTEM "../../nbbuild/antsrc/org/netbeans/nbbuild/Arch-api-questions.xml">
+]>
+
+<api-answers
+  question-version="1.29"
+  author="sven"
+>
+
+  &api-questions;
+
+  <answer id="arch-what">
+    <p>
+      The <b>nbfx Windows API</b> defines the contract between the JavaFX window system and the
+      application host: the
+      <a href="@TOP@/com/gluonhq/netbeans/nbfx/windows/WindowEnvironment.html">WindowEnvironment</a>
+      SPI, registered in the global Lookup by the host.
+    </p>
+  </answer>
+
+  <answer id="arch-overall">
+    <p>
+      The window system (tab panes, detached windows, docking) is self-contained. The few
+      behaviours that need application services - detached-window bars, navigator reveal, project
+      switching, tab home resolution - are supplied through a single <code>WindowEnvironment</code>
+      resolved from the Lookup, instead of static setters on the tab pane. Every method has a safe
+      default so a host without an environment still works.
+    </p>
+  </answer>
+
+  <answer id="arch-usecases">
+    <ul>
+      <li>The launcher registers a <code>WindowEnvironment</code> that supplies the host services.</li>
+      <li>Detached editor windows get their menu and tool bars from the environment.</li>
+      <li>The navigator-reveal and project-switch shortcuts delegate to the environment.</li>
+    </ul>
+  </answer>
+
+  <answer id="arch-quality">
+    <p>The defaults are unit-tested. The API is under development until the MVP freeze.</p>
+  </answer>
+
+  <answer id="dep-jrejdk">
+    <p>A JDK is required only to compile; JavaFX is provided by the runtime.</p>
+  </answer>
+
+  <answer id="deploy-packages">
+    <p>Only <code>com.gluonhq.netbeans.nbfx.windows</code> is public.</p>
+  </answer>
+
+  <answer id="lookup-lookup">
+    <p>
+      The window system resolves <code>WindowEnvironment</code> from the global Lookup; a host
+      registers its implementation with <code>@ServiceProvider</code>.
+    </p>
+  </answer>
+
+  <answer id="lookup-register">
+    <p>The host module registers the implementation, not this module.</p>
+  </answer>
+
+  <answer id="resources-layer">
+    <p>None.</p>
+  </answer>
+
+  <answer id="resources-read">
+    <p>None.</p>
+  </answer>
+
+  <answer id="resources-preferences">
+    <p>None.</p>
+  </answer>
+
+  <answer id="exec-threading">
+    <p>
+      <code>createDetachedBars</code>, <code>homeOf</code> and the reveal/switch calls run on the
+      JavaFX Application Thread, like the window system itself.
+    </p>
+  </answer>
+
+  <answer id="perf-startup">
+    <p>No code runs on startup.</p>
+  </answer>
+
+  <answer id="perf-exit">
+    <p>No code runs on exit.</p>
+  </answer>
+
+  <answer id="default">
+    <p>No special requirements.</p>
+  </answer>
+
+</api-answers>

@@ -1,5 +1,7 @@
 package com.gluonhq.netbeans.nbfx.findinprojects.ui;
 
+import com.gluonhq.netbeans.nbfx.annotations.FxViewLocation;
+import com.gluonhq.netbeans.nbfx.annotations.FxViewRegistration;
 import com.gluonhq.netbeans.nbfx.api.view.DockLocation;
 import com.gluonhq.netbeans.nbfx.api.view.ViewManager;
 import com.gluonhq.netbeans.nbfx.api.view.ViewProvider;
@@ -15,6 +17,8 @@ import org.openide.util.lookup.ServiceProvider;
  * the main area by default, that holds the results of every Find in Projects search as inner tabs.
  */
 @ServiceProvider(service = ViewProvider.class)
+@FxViewRegistration(id = SearchViewProvider.ID, displayName = "Search Results",
+        location = FxViewLocation.CENTER_BOTTOM, position = 10)
 public final class SearchViewProvider implements ViewProvider {
 
     /** The stable id of the view, used by the layout persistence and {@link ViewManager}. */

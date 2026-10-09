@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xml" href="../../nbbuild/javadoctools/apichanges.xsl"?>
+<!DOCTYPE apichanges PUBLIC "-//NetBeans//DTD API changes list 1.0//EN" "../../nbbuild/javadoctools/apichanges.dtd">
+<apichanges>
+    <apidefs>
+        <apidef name="netbeansfx_output">NetBeansFX Output API</apidef>
+    </apidefs>
+    <changes>
+        <change id="output.initial">
+            <api name="netbeansfx_output"/>
+            <summary>Initial pure-JavaFX output consoles.</summary>
+            <version major="1" minor="0"/>
+            <date day="8" month="10" year="2026"/>
+            <author login="sven"/>
+            <compatibility addition="yes" semantic="compatible"/>
+            <description>
+                Introduces <code>FxOutput</code>, <code>FxConsole</code> and the Output view,
+                registered under <code>NbFx/Views</code>. Build and run activities write into named
+                consoles. The API is under development until the MVP freeze.
+            </description>
+            <class package="com.gluonhq.netbeans.nbfx.output" name="FxOutput"/>
+            <class package="com.gluonhq.netbeans.nbfx.output" name="FxConsole"/>
+        </change>
+    </changes>
+    <htmlcontents>
+        <head>
+            <title>Change History for the NetBeansFX Output API</title>
+        </head>
+        <body>
+            <p class="overviewlink"><a href="overview-summary.html">Overview</a></p>
+            <h1>Introduction</h1>
+            <p>This document lists changes made to the <a href="@TOP@">NetBeansFX Output API</a>.</p>
+            <hr/><standard-changelists module-code-name="com.gluonhq.netbeans.nbfx.output"/>
+            <hr/><p>@FOOTER@</p>
+        </body>
+    </htmlcontents>
+</apichanges>

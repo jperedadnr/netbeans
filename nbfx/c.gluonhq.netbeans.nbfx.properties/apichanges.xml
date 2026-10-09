@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xml" href="../../nbbuild/javadoctools/apichanges.xsl"?>
+<!DOCTYPE apichanges PUBLIC "-//NetBeans//DTD API changes list 1.0//EN" "../../nbbuild/javadoctools/apichanges.dtd">
+<apichanges>
+    <apidefs>
+        <apidef name="nbfx_properties">NetBeansFX Properties API</apidef>
+    </apidefs>
+    <changes>
+        <change id="propertysheet.spi">
+            <api name="nbfx_properties"/>
+            <summary>Pure-FX property sheet model and editors.</summary>
+            <version major="1" minor="0"/>
+            <date day="9" month="10" year="2026"/>
+            <author login="sven"/>
+            <compatibility addition="yes" semantic="compatible"/>
+            <description>Pure-FX property sheet model and editors. Under development until the MVP freeze.</description>
+            <class package="com.gluonhq.netbeans.nbfx.properties" name="FxProperty"/>
+            <class package="com.gluonhq.netbeans.nbfx.properties" name="FxPropertySet"/>
+            <class package="com.gluonhq.netbeans.nbfx.properties" name="FxPropertiesProvider"/>
+            <class package="com.gluonhq.netbeans.nbfx.properties" name="FxPropertyEditor"/>
+        </change>
+    </changes>
+    <htmlcontents>
+        <head>
+            <title>Change History for the NetBeansFX Properties API</title>
+        </head>
+        <body>
+            <p class="overviewlink"><a href="overview-summary.html">Overview</a></p>
+            <h1>Introduction</h1>
+            <p>This document lists changes made to the <a href="@TOP@">NetBeansFX Properties API</a>.</p>
+            <hr/><standard-changelists module-code-name="com.gluonhq.netbeans.nbfx.properties"/>
+            <hr/><p>@FOOTER@</p>
+        </body>
+    </htmlcontents>
+</apichanges>

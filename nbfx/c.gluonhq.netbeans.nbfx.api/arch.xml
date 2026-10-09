@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE api-answers PUBLIC "-//NetBeans//DTD Arch Answers//EN" "../nbbuild/antsrc/org/netbeans/nbbuild/Arch.dtd" [
-  <!ENTITY api-questions SYSTEM "../nbbuild/antsrc/org/netbeans/nbbuild/Arch-api-questions.xml">
+<!DOCTYPE api-answers PUBLIC "-//NetBeans//DTD Arch Answers//EN" "../../nbbuild/antsrc/org/netbeans/nbbuild/Arch.dtd" [
+  <!ENTITY api-questions SYSTEM "../../nbbuild/antsrc/org/netbeans/nbbuild/Arch-api-questions.xml">
 ]>
 
 <api-answers 
@@ -52,10 +52,8 @@
         </question>
 -->
  <answer id="arch-quality">
-  <p>
-   XXX no answer for arch-quality
-  </p>
- </answer>
+        <p>Unit tests run on the nbfx module harness (nbjunit); the nbfx/check-purity.xml guardrail fails on Swing/AWT imports and denylisted dependencies; per-phase smoke tests (open/edit/build/run) cover the UI.</p>
+    </answer>
 
 
 
@@ -71,10 +69,8 @@
         </question>
 -->
  <answer id="arch-time">
-  <p>
-   XXX no answer for arch-time
-  </p>
- </answer>
+        <p>Not applicable; the API is small and under development.</p>
+    </answer>
 
 
 
@@ -106,10 +102,8 @@
         </question>
 -->
  <answer id="compat-deprecation">
-  <p>
-   XXX no answer for compat-deprecation
-  </p>
- </answer>
+        <p>The API is under development until the MVP freeze; incompatible changes are allowed before then and documented in apichanges.xml afterwards.</p>
+    </answer>
 
 
 
@@ -124,10 +118,8 @@
         </question>
 -->
  <answer id="compat-i18n">
-  <p>
-   XXX no answer for compat-i18n
-  </p>
- </answer>
+        <p>All user-visible strings live in Bundle.properties and are read with NbBundle; no hard-coded UI text.</p>
+    </answer>
 
 
 
@@ -138,10 +130,8 @@
         </question>
 -->
  <answer id="compat-standards">
-  <p>
-   XXX no answer for compat-standards
-  </p>
- </answer>
+        <p>Follows NetBeans conventions: layer/annotation registration, central Lookup, spec versions, apichanges.xml and arch.xml.</p>
+    </answer>
 
 
 
@@ -160,10 +150,8 @@
         </question>
 -->
  <answer id="compat-version">
-  <p>
-   XXX no answer for compat-version
-  </p>
- </answer>
+        <p>Each module declares OpenIDE-Module-Specification-Version; consumers pin the version they compile against.</p>
+    </answer>
 
 
 
@@ -178,10 +166,8 @@
         </question>
 -->
  <answer id="dep-jre">
-  <p>
-   XXX no answer for dep-jre
-  </p>
- </answer>
+        <p>Java 25 or later (OpenIDE-Module-Java-Dependencies: Java > 25).</p>
+    </answer>
 
 
 
@@ -191,10 +177,8 @@
         </question>
 -->
  <answer id="dep-jrejdk">
-  <p>
-   XXX no answer for dep-jrejdk
-  </p>
- </answer>
+        <p>Uses standard JDK modules only (java.base, java.xml, and java.desktop only for the quarantined AWT touchpoints); no internal JDK APIs.</p>
+    </answer>
 
 
 
@@ -244,10 +228,8 @@
         </question>
 -->
  <answer id="dep-non-nb">
-  <p>
-   XXX no answer for dep-non-nb
-  </p>
- </answer>
+        <p>JavaFX, bundled by nbfx.lib.javafx; no other third-party libraries in this module.</p>
+    </answer>
 
 
 
@@ -272,10 +254,8 @@
         </question>
 -->
  <answer id="dep-platform">
-  <p>
-   XXX no answer for dep-platform
-  </p>
- </answer>
+        <p>OS-specific code is isolated in OS-gated modules (e.g. nbfx.macos), never in this API.</p>
+    </answer>
 
 
 
@@ -296,10 +276,8 @@
         </question>
 -->
  <answer id="deploy-dependencies">
-  <p>
-   XXX no answer for deploy-dependencies
-  </p>
- </answer>
+        <p>Consumed as nbfx cluster modules; see the module dependencies in project.xml.</p>
+    </answer>
 
 
 
@@ -324,10 +302,8 @@
         </question>
 -->
  <answer id="deploy-jar">
-  <p>
-   XXX no answer for deploy-jar
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -340,10 +316,8 @@
         </question>
 -->
  <answer id="deploy-nbm">
-  <p>
-   XXX no answer for deploy-nbm
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -361,10 +335,8 @@
         </question>
 -->
  <answer id="deploy-packages">
-  <p>
-   XXX no answer for deploy-packages
-  </p>
- </answer>
+        <p>Only the documented public packages are exported (see public-packages); everything else is internal.</p>
+    </answer>
 
 
 
@@ -379,10 +351,8 @@
         </question>
 -->
  <answer id="deploy-shared">
-  <p>
-   XXX no answer for deploy-shared
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -399,10 +369,8 @@
         </question>
 -->
  <answer id="exec-ant-tasks">
-  <p>
-   XXX no answer for exec-ant-tasks
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -415,10 +383,8 @@
         </question>
 -->
  <answer id="exec-classloader">
-  <p>
-   XXX no answer for exec-classloader
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -438,10 +404,8 @@
         </question>
 -->
  <answer id="exec-component">
-  <p>
-   XXX no answer for exec-component
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -458,10 +422,8 @@
         </question>
 -->
  <answer id="exec-introspection">
-  <p>
-   XXX no answer for exec-introspection
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -476,10 +438,8 @@
         </question>
 -->
  <answer id="exec-privateaccess">
-  <p>
-   XXX no answer for exec-privateaccess
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -494,10 +454,8 @@
         </question>
 -->
  <answer id="exec-process">
-  <p>
-   XXX no answer for exec-process
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -522,10 +480,8 @@
         </question>
 -->
  <answer id="exec-property">
-  <p>
-   XXX no answer for exec-property
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -540,10 +496,8 @@
         </question>
 -->
  <answer id="exec-reflection">
-  <p>
-   XXX no answer for exec-reflection
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -572,10 +526,8 @@
         </question>
 -->
  <answer id="exec-threading">
-  <p>
-   XXX no answer for exec-threading
-  </p>
- </answer>
+        <p>All UI work runs on the JavaFX Application Thread; background work uses RequestProcessor and marshals back with Platform.runLater.</p>
+    </answer>
 
 
 
@@ -591,10 +543,8 @@
         </question>
 -->
  <answer id="format-clipboard">
-  <p>
-   XXX no answer for format-clipboard
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -609,10 +559,8 @@
         </question>
 -->
  <answer id="format-dnd">
-  <p>
-   XXX no answer for format-dnd
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -640,10 +588,8 @@
         </question>
 -->
  <answer id="format-types">
-  <p>
-   XXX no answer for format-types
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -672,10 +618,8 @@
         </question>
 -->
  <answer id="lookup-lookup">
-  <p>
-   XXX no answer for lookup-lookup
-  </p>
- </answer>
+        <p>Services are looked up through the central Lookup; the API exposes interfaces and implementations register themselves.</p>
+    </answer>
 
 
 
@@ -689,10 +633,8 @@
         </question>
 -->
  <answer id="lookup-register">
-  <p>
-   XXX no answer for lookup-register
-  </p>
- </answer>
+        <p>Implementations register with @ServiceProvider or the nbfx layer annotations (NbFx/*).</p>
+    </answer>
 
 
 
@@ -706,10 +648,8 @@
         </question>
 -->
  <answer id="lookup-remove">
-  <p>
-   XXX no answer for lookup-remove
-  </p>
- </answer>
+        <p>Not applicable; registrations are static for the module lifetime.</p>
+    </answer>
 
 
 
@@ -719,10 +659,8 @@
         </question>
 -->
  <answer id="perf-exit">
-  <p>
-   XXX no answer for perf-exit
-  </p>
- </answer>
+        <p>No shutdown work.</p>
+    </answer>
 
 
 
@@ -733,10 +671,8 @@
         </question>
 -->
  <answer id="perf-huge_dialogs">
-  <p>
-   XXX no answer for perf-huge_dialogs
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -760,10 +696,8 @@
         </question>
 -->
  <answer id="perf-limit">
-  <p>
-   XXX no answer for perf-limit
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -774,10 +708,8 @@
         </question>
 -->
  <answer id="perf-mem">
-  <p>
-   XXX no answer for perf-mem
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -796,10 +728,8 @@
         </question>
 -->
  <answer id="perf-menus">
-  <p>
-   XXX no answer for perf-menus
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -820,10 +750,8 @@
         </question>
 -->
  <answer id="perf-progress">
-  <p>
-   XXX no answer for perf-progress
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -839,10 +767,8 @@
         </question>
 -->
  <answer id="perf-scale">
-  <p>
-   XXX no answer for perf-scale
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -857,10 +783,8 @@
         </question>
 -->
  <answer id="perf-spi">
-  <p>
-   XXX no answer for perf-spi
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -870,10 +794,8 @@
         </question>
 -->
  <answer id="perf-startup">
-  <p>
-   XXX no answer for perf-startup
-  </p>
- </answer>
+        <p>The module is small and has no startup work.</p>
+    </answer>
 
 
 
@@ -884,10 +806,8 @@
         </question>
 -->
  <answer id="perf-wakeup">
-  <p>
-   XXX no answer for perf-wakeup
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -905,10 +825,8 @@
         </question>
 -->
  <answer id="resources-file">
-  <p>
-   XXX no answer for resources-file
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -928,10 +846,8 @@
         </question>
 -->
  <answer id="resources-layer">
-  <p>
-   XXX no answer for resources-layer
-  </p>
- </answer>
+        <p>Layer entries are generated by the nbfx annotation processors under NbFx/*; the API itself declares none.</p>
+    </answer>
 
 
 
@@ -949,10 +865,8 @@
         </question>
 -->
  <answer id="resources-mask">
-  <p>
-   XXX no answer for resources-mask
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -974,10 +888,8 @@
         </question>
 -->
  <answer id="resources-preferences">
-  <p>
-   XXX no answer for resources-preferences
-  </p>
- </answer>
+        <p>Persistent state uses NbPreferences; this API declares none.</p>
+    </answer>
 
 
 
@@ -994,10 +906,8 @@
         </question>
 -->
  <answer id="resources-read">
-  <p>
-   XXX no answer for resources-read
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -1012,10 +922,8 @@
         </question>
 -->
  <answer id="security-grant">
-  <p>
-   XXX no answer for security-grant
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 
 
@@ -1029,9 +937,7 @@
         </question>
 -->
  <answer id="security-policy">
-  <p>
-   XXX no answer for security-policy
-  </p>
- </answer>
+        <p>No special requirements.</p>
+    </answer>
 
 </api-answers>

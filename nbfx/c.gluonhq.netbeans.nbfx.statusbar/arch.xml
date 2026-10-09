@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE api-answers PUBLIC "-//NetBeans//DTD Arch Answers//EN" "../../nbbuild/antsrc/org/netbeans/nbbuild/Arch.dtd" [
+  <!ENTITY api-questions SYSTEM "../../nbbuild/antsrc/org/netbeans/nbbuild/Arch-api-questions.xml">
+]>
+
+<api-answers
+  question-version="1.29"
+  author="sven"
+>
+
+  &api-questions;
+
+  <answer id="arch-what">
+    <p>
+      The <b>nbfx Status Bar API</b> defines the pure-JavaFX status bar contract: the
+      <a href="@TOP@/com/gluonhq/netbeans/nbfx/statusbar/FxStatusElement.html">FxStatusElement</a>
+      SPI, the registry that discovers elements from the layer, and the
+      <a href="@TOP@/com/gluonhq/netbeans/nbfx/statusbar/FxStatusBar.html">FxStatusBar</a> component
+      that lays them out.
+    </p>
+  </answer>
+
+  <answer id="arch-overall">
+    <p>
+      Elements are registered with <code>@FxStatusRegistration</code>, which generates
+      <code>NbFx/Status/&lt;id&gt;.instance</code> layer entries carrying the alignment and position.
+      <code>StatusElementRegistry</code> reads that folder and returns
+      the elements ordered by slot, position and id; <code>FxStatusBar</code> places their nodes in
+      the left, centre and right slots.
+    </p>
+  </answer>
+
+  <answer id="arch-usecases">
+    <ul>
+      <li>The editor contributes a caret-position element.</li>
+      <li>The project module contributes a selected-project element.</li>
+      <li>The progress module contributes a progress element.</li>
+    </ul>
+  </answer>
+
+  <answer id="arch-quality">
+    <p>The ordering logic is unit-tested. The API is under development until the MVP freeze.</p>
+  </answer>
+
+  <answer id="dep-jrejdk">
+    <p>A JDK is required only to compile; JavaFX is provided by the runtime.</p>
+  </answer>
+
+  <answer id="deploy-packages">
+    <p>Only <code>com.gluonhq.netbeans.nbfx.statusbar</code> is public.</p>
+  </answer>
+
+  <answer id="lookup-lookup">
+    <p>
+      Elements are read from the configuration filesystem under <code>NbFx/Status</code>, not from
+      the Lookup, so the registry can also read the placement attributes.
+    </p>
+  </answer>
+
+  <answer id="lookup-register">
+    <p>None.</p>
+  </answer>
+
+  <answer id="resources-layer">
+    <p>Reads <code>NbFx/Status</code>. The entries are written by the nbfx annotations processors.</p>
+  </answer>
+
+  <answer id="resources-read">
+    <p><code>NbFx/Status</code>, as described above.</p>
+  </answer>
+
+  <answer id="resources-preferences">
+    <p>None.</p>
+  </answer>
+
+  <answer id="exec-threading">
+    <p>
+      <code>StatusElementRegistry.discover()</code> reads the
+      configuration filesystem and may run on any thread. Constructing
+      <code>FxStatusBar</code> and creating element nodes must run on the JavaFX Application Thread.
+    </p>
+  </answer>
+
+  <answer id="perf-startup">
+    <p>The elements are discovered when the status bar is built, once per window.</p>
+  </answer>
+
+  <answer id="perf-exit">
+    <p><code>FxStatusBar.dispose()</code> releases the element resources.</p>
+  </answer>
+
+  <answer id="default">
+    <p>No special requirements.</p>
+  </answer>
+
+</api-answers>

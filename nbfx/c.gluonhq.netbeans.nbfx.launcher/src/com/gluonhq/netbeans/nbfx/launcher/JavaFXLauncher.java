@@ -1,22 +1,39 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package com.gluonhq.netbeans.nbfx.launcher;
 
-import com.gluonhq.netbeans.nbfx.launcher.project.VersioningOptOut;
-
-import java.awt.AWTEvent;
-import java.awt.Frame;
-import java.awt.Toolkit;
-import java.awt.event.AWTEventListener;
-import java.awt.event.ComponentEvent;
+import com.gluonhq.netbeans.nbfx.ui.JavaFXLaunchApp;
+import com.gluonhq.netbeans.nbfx.ui.project.VersioningOptOut;
 import java.util.logging.Logger;
 import javafx.application.Application;
 import org.openide.modules.ModuleInstall;
-import org.openide.windows.WindowManager;
 
+/**
+ * Starts the JavaFX application after the NetBeans Platform has loaded.
+ * <p>
+ * The platform still starts its Swing window system; {@link SwingWindowSuppressor} hides its main
+ * window, which the JavaFX frontend does not use. When the window system is fully replaced, that
+ * suppression (and the platform window-system modules it depends on) go away.
+ */
 public class JavaFXLauncher extends ModuleInstall {
 
     private static final Logger LOG = Logger.getLogger(JavaFXLauncher.class.getName());
-
-    private final AWTEventListener windowSuppressor = this::onAwtEvent;
 
     @Override
     public void validate() {
@@ -26,42 +43,11 @@ public class JavaFXLauncher extends ModuleInstall {
 
     @Override
     public void restored() {
-        LOG.info("NetBeans main window, AWT listener added");
-        Toolkit.getDefaultToolkit().addAWTEventListener(windowSuppressor, AWTEvent.COMPONENT_EVENT_MASK);
+        SwingWindowSuppressor.install();
 
         LOG.info("NetBeans Platform loaded, launching JavaFX...");
         Thread thread = new Thread(() -> Application.launch(JavaFXLaunchApp.class), "nbfx-javafx-launcher");
         thread.setDaemon(true);
         thread.start();
     }
-
-    private void onAwtEvent(AWTEvent event) {
-        Frame mainWindow;
-        try {
-            mainWindow = WindowManager.getDefault().getMainWindow();
-        } catch (Exception e) {
-            return; // too early, window manager not yet initialized
-        }
-        if (mainWindow == null) {
-            return;
-        }
-
-        // Component events (SHOWN / RESIZED)
-        if (event instanceof ComponentEvent ce && ce.getComponent() == mainWindow && !mainWindow.isDisplayable()) {
-            try {
-                mainWindow.setUndecorated(true);
-                mainWindow.setOpacity(0f);
-                mainWindow.setFocusable(false);
-            } catch (Exception e) {
-                // ignore and hide the window on next events instead
-            }
-            LOG.info("mainWindow suppressed (opacity=0)");
-        } else if (mainWindow.isVisible()) {
-            mainWindow.setVisible(false);
-            mainWindow.setFocusable(false);
-            Toolkit.getDefaultToolkit().removeAWTEventListener(windowSuppressor);
-            LOG.info("mainWindow hidden");
-        }
-    }
-
 }

@@ -1,8 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xml" href="CHANGE../../nbbuild/javadoctools/apichanges.xsl"?>
+<?xml-stylesheet type="text/xml" href="../../nbbuild/javadoctools/apichanges.xsl"?>
 <!DOCTYPE apichanges PUBLIC "-//NetBeans//DTD API changes list 1.0//EN" "../../nbbuild/javadoctools/apichanges.dtd">
 <apichanges>
     <apidefs>
         <apidef name="netbeansfx_api">NetBeansFX API</apidef>
     </apidefs>
+    <changes>
+        <change id="actionlayer.reader">
+            <api name="netbeansfx_api"/>
+            <summary>Layer-driven action references and JavaFX menu presentation.</summary>
+            <version major="1" minor="0"/>
+            <date day="8" month="10" year="2026"/>
+            <author login="sven"/>
+            <compatibility addition="yes" semantic="compatible"/>
+            <description>
+                Adds <code>FxActionRef</code>, <code>ActionLayerReader</code> and
+                <code>LayerMenuBuilder</code>, so menus can be assembled from the action references
+                the nbfx annotations write under <code>NbFx/Menus</code>, <code>NbFx/Toolbars</code>
+                and <code>NbFx/ContextMenus</code> instead of hard-coded id lists. The API is under
+                development until the MVP freeze.
+            </description>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="FxActionRef"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="ActionLayerReader"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="LayerMenuBuilder"/>
+        </change>
+        <change id="keymap.spi">
+            <api name="netbeansfx_api"/>
+            <summary>User-configurable keyboard map for commands.</summary>
+            <version major="1" minor="0"/>
+            <date day="9" month="10" year="2026"/>
+            <author login="sven"/>
+            <compatibility addition="yes" semantic="compatible"/>
+            <description>
+                Adds <code>KeyMap</code>, letting the user override the accelerator of a command;
+                <code>LayerMenuBuilder</code> applies the override when building menu items. Under
+                development until the MVP freeze.
+            </description>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="KeyMap"/>
+        </change>
+    </changes>
+    <htmlcontents>
+        <head>
+            <title>Change History for the NetBeansFX API</title>
+        </head>
+        <body>
+            <p class="overviewlink"><a href="overview-summary.html">Overview</a></p>
+            <h1>Introduction</h1>
+            <p>This document lists changes made to the <a href="@TOP@">NetBeansFX API</a>.</p>
+            <hr/><standard-changelists module-code-name="com.gluonhq.netbeans.nbfx.api"/>
+            <hr/><p>@FOOTER@</p>
+        </body>
+    </htmlcontents>
 </apichanges>

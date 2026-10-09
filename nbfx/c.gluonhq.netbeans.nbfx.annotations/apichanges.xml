@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xml" href="../../nbbuild/javadoctools/apichanges.xsl"?>
+<!DOCTYPE apichanges PUBLIC "-//NetBeans//DTD API changes list 1.0//EN" "../../nbbuild/javadoctools/apichanges.dtd">
+<apichanges>
+    <apidefs>
+        <apidef name="netbeansfx_annotations">NetBeansFX Annotations API</apidef>
+    </apidefs>
+    <changes>
+        <change id="fxannotations.initial">
+            <api name="netbeansfx_annotations"/>
+            <summary>Initial nbfx registration annotations and layer paths.</summary>
+            <version major="1" minor="0"/>
+            <date day="8" month="10" year="2026"/>
+            <author login="sven"/>
+            <compatibility addition="yes" semantic="compatible"/>
+            <description>
+                Introduces the SOURCE-retention annotations
+                <code>@FxActionRegistration</code>, <code>@FxActionReference</code>,
+                <code>@FxViewRegistration</code>, <code>@FxStatusRegistration</code>,
+                <code>@FxPropertyEditorRegistration</code>, <code>@FxOptionsRegistration</code>,
+                <code>@FxOptionsSubRegistration</code>, <code>@FxOptionsContainerRegistration</code>,
+                <code>@FxProjectTypeRegistration</code> and <code>@FxWizardRegistration</code>, the
+                <code>FxLayer</code> layer-path constants, the <code>FxViewLocation</code> and
+                <code>FxStatusAlignment</code> enums, and the corresponding layer-generating
+                processors that write under the <code>NbFx/</code> folder. The API is under
+                development until the MVP freeze.
+            </description>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxLayer"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxActionRegistration"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxActionReference"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxActionReferences"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxViewRegistration"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxViewLocation"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxStatusRegistration"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxStatusAlignment"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxPropertyEditorRegistration"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxOptionsRegistration"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxOptionsSubRegistration"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxOptionsContainerRegistration"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxProjectTypeRegistration"/>
+            <class package="com.gluonhq.netbeans.nbfx.annotations" name="FxWizardRegistration"/>
+        </change>
+    </changes>
+    <htmlcontents>
+        <head>
+            <title>Change History for the NetBeansFX Annotations API</title>
+        </head>
+        <body>
+            <p class="overviewlink"><a href="overview-summary.html">Overview</a></p>
+            <h1>Introduction</h1>
+            <p>
+                This document lists changes made to the <a href="@TOP@">NetBeansFX Annotations
+                API</a>.
+            </p>
+            <hr/><standard-changelists module-code-name="com.gluonhq.netbeans.nbfx.annotations"/>
+            <hr/><p>@FOOTER@</p>
+        </body>
+    </htmlcontents>
+</apichanges>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xml" href="../../nbbuild/javadoctools/apichanges.xsl"?>
+<!DOCTYPE apichanges PUBLIC "-//NetBeans//DTD API changes list 1.0//EN" "../../nbbuild/javadoctools/apichanges.dtd">
+<apichanges>
+    <apidefs>
+        <apidef name="netbeansfx_wizard">NetBeansFX Wizard API</apidef>
+    </apidefs>
+    <changes>
+        <change id="wizard.initial">
+            <api name="netbeansfx_wizard"/>
+            <summary>Initial pure-JavaFX wizard framework.</summary>
+            <version major="1" minor="0"/>
+            <date day="8" month="10" year="2026"/>
+            <author login="sven"/>
+            <compatibility addition="yes" semantic="compatible"/>
+            <description>
+                Introduces <code>FxWizard</code>, <code>FxWizardPanel</code>,
+                <code>WizardRegistration</code>, <code>WizardRegistry</code> and
+                <code>FxWizardDialog</code>. Wizards are registered with
+                <code>@FxWizardRegistration</code> under <code>NbFx/Wizards</code>. The API is under
+                development until the MVP freeze.
+            </description>
+            <class package="com.gluonhq.netbeans.nbfx.wizard" name="FxWizard"/>
+            <class package="com.gluonhq.netbeans.nbfx.wizard" name="FxWizardPanel"/>
+            <class package="com.gluonhq.netbeans.nbfx.wizard" name="WizardRegistry"/>
+            <class package="com.gluonhq.netbeans.nbfx.wizard" name="FxWizardDialog"/>
+        </change>
+    </changes>
+    <htmlcontents>
+        <head>
+            <title>Change History for the NetBeansFX Wizard API</title>
+        </head>
+        <body>
+            <p class="overviewlink"><a href="overview-summary.html">Overview</a></p>
+            <h1>Introduction</h1>
+            <p>This document lists changes made to the <a href="@TOP@">NetBeansFX Wizard API</a>.</p>
+            <hr/><standard-changelists module-code-name="com.gluonhq.netbeans.nbfx.wizard"/>
+            <hr/><p>@FOOTER@</p>
+        </body>
+    </htmlcontents>
+</apichanges>
