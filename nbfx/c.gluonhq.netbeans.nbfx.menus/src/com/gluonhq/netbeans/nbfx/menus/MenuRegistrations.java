@@ -31,6 +31,12 @@ import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.FIND_NEXT;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.FIND_PREVIOUS;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.FIND_SELECTION;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.FIND_USAGES;
+import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.GO_TO_DECLARATION;
+import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.GO_TO_IMPLEMENTATION;
+import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.GO_TO_SOURCE;
+import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.GO_TO_SUPER_IMPLEMENTATION;
+import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.INSPECT_FILE_MEMBERS;
+import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.INSPECT_MEMBERS;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.NEW_PROJECT;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.NEW_FILE;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.NEXT_PROJECT;
@@ -45,7 +51,9 @@ import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.SAVE;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.SAVE_ALL;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.SELECT_EDITOR;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.SELECT_FILES;
+import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.SELECT_IN_FILES;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.SELECT_IN_PROJECTS;
+import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.SELECT_NAVIGATOR;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.SELECT_PROJECTS;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.SELECT_SEARCH_RESULTS;
 import static com.gluonhq.netbeans.nbfx.api.actions.ActionIds.SELECT_USAGES;
@@ -67,6 +75,7 @@ import com.gluonhq.netbeans.nbfx.annotations.FxMenuRegistration;
 @FxMenuRegistration(id = "File", position = 10)
 @FxMenuRegistration(id = "Edit", position = 20)
 @FxMenuRegistration(id = "View", position = 30)
+@FxMenuRegistration(id = "Navigate", position = 40)
 @FxMenuRegistration(id = "Tools", position = 60)
 @FxMenuRegistration(id = "Window", position = 70)
 @FxMenuRegistration(id = "Help", position = 90)
@@ -80,6 +89,7 @@ import com.gluonhq.netbeans.nbfx.annotations.FxMenuRegistration;
 @FxActionReference(id = SAVE_ALL, path = "Menus/File", position = 70)
 @FxActionReference(id = SELECT_PROJECTS, path = "Menus/Window", position = 10)
 @FxActionReference(id = SELECT_FILES, path = "Menus/Window", position = 20)
+@FxActionReference(id = SELECT_NAVIGATOR, path = "Menus/Window", position = 25)
 @FxActionReference(id = SELECT_EDITOR, path = "Menus/Window", position = 30)
 @FxActionReference(id = SELECT_USAGES, path = "Menus/Window", position = 40)
 @FxActionReference(id = SELECT_SEARCH_RESULTS, path = "Menus/Window", position = 50)
@@ -91,6 +101,14 @@ import com.gluonhq.netbeans.nbfx.annotations.FxMenuRegistration;
 @FxActionReference(id = NEXT_PROJECT, path = "Menus/Window", position = 110, separatorBefore = true)
 @FxActionReference(id = PREVIOUS_PROJECT, path = "Menus/Window", position = 120)
 @FxActionReference(id = SELECT_IN_PROJECTS, path = "ContextMenus/Editor", position = 120, separatorBefore = true)
+@FxActionReference(id = GO_TO_SOURCE, path = "Menus/Navigate", position = 10)
+@FxActionReference(id = GO_TO_DECLARATION, path = "Menus/Navigate", position = 20)
+@FxActionReference(id = GO_TO_SUPER_IMPLEMENTATION, path = "Menus/Navigate", position = 30)
+@FxActionReference(id = GO_TO_IMPLEMENTATION, path = "Menus/Navigate", position = 40)
+@FxActionReference(id = INSPECT_MEMBERS, path = "Menus/Navigate", position = 50, separatorBefore = true)
+@FxActionReference(id = INSPECT_FILE_MEMBERS, path = "Menus/Navigate", position = 60)
+@FxActionReference(id = SELECT_IN_PROJECTS, path = "Menus/Navigate", position = 70, separatorBefore = true)
+@FxActionReference(id = SELECT_IN_FILES, path = "Menus/Navigate", position = 80)
 @FxActionReference(id = UNDO, path = "Menus/Edit", position = 10)
 @FxActionReference(id = REDO, path = "Menus/Edit", position = 20)
 @FxActionReference(id = CUT, path = "Menus/Edit", position = 30, separatorBefore = true)

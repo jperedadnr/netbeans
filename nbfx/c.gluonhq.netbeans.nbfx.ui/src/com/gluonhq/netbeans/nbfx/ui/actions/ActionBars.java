@@ -12,6 +12,8 @@ import com.gluonhq.netbeans.nbfx.api.actions.ActionLayerReader;
 import com.gluonhq.netbeans.nbfx.api.actions.ActionRegistry;
 import com.gluonhq.netbeans.nbfx.api.actions.Command;
 import com.gluonhq.netbeans.nbfx.api.actions.FxActionRef;
+import com.gluonhq.netbeans.nbfx.api.actions.FxMenuEntry;
+import com.gluonhq.netbeans.nbfx.api.actions.FxSubmenu;
 import com.gluonhq.netbeans.nbfx.api.editor.EditorDocument;
 import com.gluonhq.netbeans.nbfx.api.editor.EditorSettings;
 import com.gluonhq.netbeans.nbfx.api.project.OpenProject;
@@ -101,6 +103,8 @@ public final class ActionBars {
         ICONS.put(ActionIds.REDO, "redo24.png");
         ICONS.put(ActionIds.SELECT_PROJECTS, "projectTab.png");
         ICONS.put(ActionIds.SELECT_FILES, "filesTab.png");
+        ICONS.put(ActionIds.SELECT_IN_PROJECTS, "projectTab.png");
+        ICONS.put(ActionIds.SELECT_IN_FILES, "filesTab.png");
         ICONS.put(ActionIds.BUILD, "build.png");
         ICONS.put(ActionIds.CLEAN_BUILD, "cleanBuild.png");
         ICONS.put(ActionIds.CLEAN, "clean24.gif");
@@ -222,12 +226,15 @@ public final class ActionBars {
     }
 
     /**
-     * Registers the launcher-owned entry of the editor's context menu: Select in Projects, which
-     * reveals the file of the globally active editor (the right-clicked one, as opening the menu
-     * focuses it) in the Projects view. The menu entry itself is declared in the layer by
-     * {@link MenuRegistrations}.
+     * Registers the Select in Projects / Select in Files commands (Navigate menu), which reveal the
+     * file of the globally active editor in the Projects / Files view; Select in Projects is also
+     * in the editor's context menu, the right-clicked editor being the active one, as opening the
+     * menu focuses it. The menu entries themselves are declared in the layer by
+     * {@link MenuRegistrations}. Their shortcuts (Shift+Shortcut+1 / +2) are bound by the windows
+     * themselves, so they also work in detached windows; the commands carry them for the menus to
+     * show.
      */
-    public void registerEditorContextCommands(Consumer<FileObject> selectInProjects) {
+    public void registerEditorContextCommands(Consumer<FileObject> selectInProjects, Consumer<FileObject> selectInFiles) {
         if (registry == null) {
             LOG.warning("No ActionRegistry found; editor context actions will not be available");
             return;
@@ -237,10 +244,17 @@ public final class ActionBars {
                 ? new SimpleBooleanProperty(true)
                 : Bindings.createBooleanBinding(() -> active.getValue() == null, active);
         registry.register(new RunnableCommand(ActionIds.SELECT_IN_PROJECTS, message("CTL_SelectInProjectsCommand"),
-                null, () -> {
+                new KeyCodeCombination(KeyCode.DIGIT1, KeyCombination.SHORTCUT_DOWN, KeyCombination.SHIFT_DOWN), () -> {
                     EditorDocument document = active == null ? null : active.getValue();
                     if (document != null) {
                         selectInProjects.accept(document.getFileObject());
+                    }
+                }, disabled));
+        registry.register(new RunnableCommand(ActionIds.SELECT_IN_FILES, message("CTL_SelectInFilesCommand"),
+                new KeyCodeCombination(KeyCode.DIGIT2, KeyCombination.SHORTCUT_DOWN, KeyCombination.SHIFT_DOWN), () -> {
+                    EditorDocument document = active == null ? null : active.getValue();
+                    if (document != null) {
+                        selectInFiles.accept(document.getFileObject());
                     }
                 }, disabled));
     }
@@ -325,21 +339,36 @@ public final class ActionBars {
         return menu;
     }
 
-    /** Builds a menu from the layer references in {@code spec}, or {@code null} when it has none. */
+    /** Builds a menu from the layer entries in {@code spec}, or {@code null} when none of them resolves. */
     private Menu createRefMenu(MenuSpec spec, ObservableValue<EditorDocument> mainScope) {
-        if (spec.refs().isEmpty()) {
+        if (spec.entries().isEmpty()) {
             return null;
         }
         Menu menu = new Menu(spec.title().isEmpty() ? spec.id() : spec.title());
-        for (FxActionRef ref : spec.refs()) {
-            MenuItem item = createOptionalMenuItem(ref.actionId(), mainScope, null);
+        addEntries(menu, spec.entries(), mainScope);
+        return menu.getItems().isEmpty() ? null : menu;
+    }
+
+    /**
+     * Adds the items of {@code entries} to {@code menu}: an optional item per reference (a command
+     * another module may or may not contribute) and a submenu per nested folder with any such item.
+     */
+    private void addEntries(Menu menu, List<FxMenuEntry> entries, ObservableValue<EditorDocument> mainScope) {
+        for (FxMenuEntry entry : entries) {
+            MenuItem item = switch (entry) {
+                case FxActionRef ref -> createOptionalMenuItem(ref.actionId(), mainScope, null);
+                case FxSubmenu submenu -> {
+                    Menu nested = new Menu(submenu.displayName());
+                    addEntries(nested, submenu.entries(), mainScope);
+                    yield nested.getItems().isEmpty() ? null : nested;
+                }
+            };
             if (item == null) {
                 continue;
             }
-            addSeparatorIfNeeded(menu, ref);
+            addSeparatorIfNeeded(menu, entry);
             menu.getItems().add(item);
         }
-        return menu.getItems().isEmpty() ? null : menu;
     }
 
     /** The menus declared under {@code NbFx/Menus}, ordered by their {@code position}. */
@@ -356,7 +385,7 @@ public final class ActionBars {
             int position = folder.getAttribute("position") instanceof Integer p ? p : Integer.MAX_VALUE;
             String displayName = folder.getAttribute("displayName") instanceof String s ? s : "";
             specs.add(new MenuSpec(folder.getName(), menuTitle(folder.getName(), displayName), position,
-                    ActionLayerReader.read(folder)));
+                    ActionLayerReader.readEntries(folder)));
         }
         specs.sort(Comparator.comparingInt(MenuSpec::position).thenComparing(MenuSpec::id));
         return specs;
@@ -373,8 +402,8 @@ public final class ActionBars {
         }
     }
 
-    /** A menu declared in the layer: its id, title, order and references. */
-    private record MenuSpec(String id, String title, int position, List<FxActionRef> refs) {
+    /** A menu declared in the layer: its id, title, order and entries (references and submenus). */
+    private record MenuSpec(String id, String title, int position, List<FxMenuEntry> entries) {
     }
 
     /**
@@ -513,7 +542,7 @@ public final class ActionBars {
     }
 
     /** Adds a separator before the next item when the reference asks for one and it is not already there. */
-    private static void addSeparatorIfNeeded(Menu menu, FxActionRef ref) {
+    private static void addSeparatorIfNeeded(Menu menu, FxMenuEntry ref) {
         ObservableList<MenuItem> items = menu.getItems();
         if (ref.separatorBefore() && !items.isEmpty()
                 && !(items.get(items.size() - 1) instanceof SeparatorMenuItem)) {
@@ -898,7 +927,8 @@ public final class ActionBars {
         if (command == null) {
             return null;
         }
-        ImageView graphic = menuIcon(ICONS.get(commandId));
+        // The shell's commands have their icons here; a contributed command brings its own.
+        Node graphic = ICONS.containsKey(commandId) ? menuIcon(ICONS.get(commandId)) : command.getIcon();
         MenuItem item = new MenuItem(command.getText(), graphic);
         item.disableProperty().bind(command.disabledProperty());
         item.setOnAction(e -> command.run());
@@ -922,7 +952,9 @@ public final class ActionBars {
         // focus escapes to another node (the tree), flipping the focus-based Cut/Copy/Paste/Undo/Redo
         // dispatch to the wrong target.
         button.setFocusTraversable(false);
-        ImageView graphic = toolbarIcon(ICONS.get(commandId), TOOLBAR_ICON_SIZE, TOOLBAR_ICON_SIZE);
+        Node graphic = ICONS.containsKey(commandId)
+                ? toolbarIcon(ICONS.get(commandId), TOOLBAR_ICON_SIZE, TOOLBAR_ICON_SIZE)
+                : command.getIcon();
         if (graphic != null) {
             button.setGraphic(graphic);
         } else {

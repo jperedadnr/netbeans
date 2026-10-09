@@ -554,8 +554,8 @@
 .context-menu {
     -fx-background-color: white;
     -fx-background-insets: 0;
-    -fx-min-width: 160;
     -fx-padding: 4 1 4 1;
+    -fx-font-family: System;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 12, 0.10, 0, 8);
 }
 
@@ -565,9 +565,16 @@
     -fx-effect: null;
 }
 
-.context-menu .menu:hover .arrow,
-.context-menu .menu:focused .arrow {
+.context-menu .menu > .right-container > .arrow {
+    -fx-padding: 2 2 2 2;
     -fx-background-color: #808080;
+    -fx-shape: "M0 0C-.234.234-.234.618 0 .852L3.18 4.026 0 7.2c-.234.234-.234.618 0 .852s.618.234.852 0l3.6-3.6c.234-.234.234-.618 0-.852L.852 0C.618-.234.234-.234 0 0Z";
+    -fx-scale-shape: false;
+}
+
+.context-menu .menu:hover > .right-container > .arrow,
+.context-menu .menu:focused > .right-container > .arrow {
+    -fx-background-color: white;
 }
 
 .context-menu .menu-item,

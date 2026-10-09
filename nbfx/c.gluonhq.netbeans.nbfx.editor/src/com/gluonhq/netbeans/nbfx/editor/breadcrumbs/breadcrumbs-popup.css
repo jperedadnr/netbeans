@@ -57,19 +57,7 @@
 }
 
 .breadcrumbs-popup-root > .breadcrumbs-popup-list .breadcrumbs-popup-cell {
-    -fx-background-color: transparent;
     -fx-font-size: 0.9em;
-    -fx-text-fill: #1F2328;
     -fx-padding: 2 8 2 8;
 }
 
-.breadcrumbs-popup-root > .breadcrumbs-popup-list .breadcrumbs-popup-cell:filled:hover {
-    -fx-background-color: #F3F7FB;
-}
-
-.breadcrumbs-popup-root > .breadcrumbs-popup-list .breadcrumbs-popup-cell:filled:selected,
-.breadcrumbs-popup-root > .breadcrumbs-popup-list .breadcrumbs-popup-cell:filled:selected:hover,
-.breadcrumbs-popup-root > .breadcrumbs-popup-list .breadcrumbs-popup-cell:filled:focused:selected {
-    -fx-background-color: #DCEBFA;
-    -fx-text-fill: #0B57D0;
-}

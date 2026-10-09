@@ -6,7 +6,9 @@ import com.gluonhq.netbeans.nbfx.api.project.ProjectRegistry;
 import java.io.IOException;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Lookup;
@@ -156,6 +158,18 @@ public interface EditorDocument {
     ObservableValue<CaretInfo> caretInfoProperty();
 
     /**
+     * An observable counter that grows with every change to the content - an edit, an undo, a reload
+     * of the file from disk - so views that analyse the text outside the editor (the Navigator) know
+     * when to {@linkplain OpenSources#textOf read} it again. The value itself carries no meaning;
+     * the default implementation never changes.
+     *
+     * @return the read-only text-version property
+     */
+    default ObservableValue<Number> textVersionProperty() {
+        return new SimpleLongProperty(0);
+    }
+
+    /**
      * The observable line separator of this document's file ({@code "\n"}, {@code "\r"} or
      * {@code "\r\n"}), so the UI (typically the status bar) can name it and follow it when the
      * user {@linkplain #setLineSeparator(String) changes} it. The value is {@code null} when
@@ -224,6 +238,17 @@ public interface EditorDocument {
      */
     default int getCaretOffset() {
         return 0;
+    }
+
+    /**
+     * The point right under the caret, in screen coordinates, where a popup about the element at
+     * the caret is anchored; {@code null} when the editor is not showing or cannot tell. The
+     * default implementation returns {@code null}.
+     *
+     * @return the caret's screen position, or {@code null}
+     */
+    default Point2D getCaretScreenPosition() {
+        return null;
     }
 
     /**

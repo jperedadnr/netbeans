@@ -72,6 +72,9 @@ public final class ActionIds {
     /** Shows/selects the Files navigator tab. */
     public static final String SELECT_FILES = "selectFiles";
 
+    /** Shows and selects the Navigator view - the members of the edited class (Window menu). */
+    public static final String SELECT_NAVIGATOR = "selectNavigator";
+
     /** Selects and focuses the main editor pane. */
     public static final String SELECT_EDITOR = "selectEditor";
 
@@ -87,8 +90,39 @@ public final class ActionIds {
     /** Closes all open editor documents except the selected one. */
     public static final String CLOSE_OTHER_DOCUMENTS = "closeOtherDocuments";
 
-    /** Selects the file of the active editor in the Projects view (editor context menu). */
+    /** Navigate &#9656; Select in Projects: selects the file of the active editor in the Projects view. */
     public static final String SELECT_IN_PROJECTS = "selectInProjects";
+    /** Navigate &#9656; Select in Files: selects the file of the active editor in the Files view. */
+    public static final String SELECT_IN_FILES = "selectInFiles";
+    /**
+     * Navigate &#9656; Inspect &#9656; Members: shows in the Navigator the members of the type at the
+     * caret of the active editor - the type of the element there - and records it in the Inspect
+     * Members history.
+     */
+    public static final String INSPECT_MEMBERS = "inspectMembers";
+    /** Navigate &#9656; Inspect &#9656; File Members: shows in the Navigator the members of the active editor's file. */
+    public static final String INSPECT_FILE_MEMBERS = "inspectFileMembers";
+    /**
+     * Navigate &#9656; Go to Source: opens the source of the element at the caret of the active
+     * editor - for a variable, the source of its type.
+     */
+    public static final String GO_TO_SOURCE = "goToSource";
+    /**
+     * Navigate &#9656; Go to Declaration: opens the declaration of the element at the caret of the
+     * active editor (also Shortcut+Click in the editor).
+     */
+    public static final String GO_TO_DECLARATION = "goToDeclaration";
+    /**
+     * Navigate &#9656; Go to Super Implementation: opens the method the one at the caret of the
+     * active editor overrides, or the supertype of the type there.
+     */
+    public static final String GO_TO_SUPER_IMPLEMENTATION = "goToSuperImplementation";
+    /**
+     * Navigate &#9656; Go to Implementation: lists the subtypes of the type at the caret of the
+     * active editor, or the methods overriding the method there, and opens the chosen one (also
+     * Alt+Shortcut+Click in the editor).
+     */
+    public static final String GO_TO_IMPLEMENTATION = "goToImplementation";
 
     /** Shows the Find bar of the active editor (Edit menu). */
     public static final String FIND = "find";

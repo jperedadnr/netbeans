@@ -53,6 +53,14 @@ public class FxAnnotationsProcessorTest {
             + "    }\n"
             + "    @FxViewRegistration(id = \"demo.view\", displayName = \"Demo View\")\n"
             + "    public static class DemoView {}\n"
+            + "    @FxViewRegistration(id = \"demo.structure\", displayName = \"Structure\","
+            + " iconName = \"demo/structure.png\", location = FxViewLocation.LEFT_BOTTOM, openAtStartup = true)\n"
+            + "    public static class DemoStructure {}\n"
+            + "    @FxMenuRegistration(id = \"Navigate\", position = 40)\n"
+            + "    @FxMenuRegistration(id = \"Inspect\", path = \"ContextMenus/Editor\", position = 100,"
+            + " separatorBefore = true)\n"
+            + "    @FxActionReference(id = \"demo.hello\", path = \"ContextMenus/Editor/Inspect\", position = 10)\n"
+            + "    public static class DemoMenus {}\n"
             + "    @FxStatusRegistration(id = \"demo.status\")\n"
             + "    public static class DemoStatus {}\n"
             + "    @FxPropertyEditorRegistration(valueType = String.class)\n"
@@ -64,6 +72,7 @@ public class FxAnnotationsProcessorTest {
     private static final String PROCESSORS = String.join(",",
             "com.gluonhq.netbeans.nbfx.annotations.processors.FxActionRegistrationProcessor",
             "com.gluonhq.netbeans.nbfx.annotations.processors.FxViewRegistrationProcessor",
+            "com.gluonhq.netbeans.nbfx.annotations.processors.FxMenuRegistrationProcessor",
             "com.gluonhq.netbeans.nbfx.annotations.processors.FxStatusRegistrationProcessor",
             "com.gluonhq.netbeans.nbfx.annotations.processors.FxPropertyEditorRegistrationProcessor",
             "com.gluonhq.netbeans.nbfx.annotations.processors.FxOptionsRegistrationProcessor",
@@ -118,6 +127,16 @@ public class FxAnnotationsProcessorTest {
         // Views
         assertTrue(xml, xml.contains("name=\"demo.view.instance\""));
         assertTrue(xml, xml.contains("location\" stringvalue=\"LEFT\""));
+        assertTrue(xml, xml.contains("name=\"demo.structure.instance\""));
+        assertTrue(xml, xml.contains("iconName\" stringvalue=\"demo/structure.png\""));
+        assertTrue(xml, xml.contains("location\" stringvalue=\"LEFT_BOTTOM\""));
+        assertTrue(xml, xml.contains("boolvalue=\"true\" name=\"openAtStartup\""));
+        // Menus: a top-level menu and a submenu of the editor's context menu
+        assertTrue(xml, xml.contains("<folder name=\"Navigate\">"));
+        assertTrue(xml, xml.contains("<folder name=\"ContextMenus\">"));
+        assertTrue(xml, xml.contains("<folder name=\"Editor\">"));
+        assertTrue(xml, xml.contains("<folder name=\"Inspect\">"));
+        assertTrue(xml, xml.contains("boolvalue=\"true\" name=\"separatorBefore\""));
         // Status
         assertTrue(xml, xml.contains("name=\"demo.status.instance\""));
         // Property editors, keyed by value type

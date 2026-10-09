@@ -36,8 +36,8 @@ import org.openide.util.lookup.Lookups;
  * <p>
  * Views are declared with {@code @FxViewRegistration}, which writes an
  * {@code NbFx/Views/<id>.instance} entry carrying the display name, icon, default location,
- * position and navigator flag. The registered attributes take precedence over the values reported
- * by the view itself, so placement is declared rather than coded.
+ * position, navigator and open-at-startup flags. The registered attributes take precedence over the
+ * values reported by the view itself, so placement is declared rather than coded.
  *
  * @since 1.0
  */
@@ -71,9 +71,21 @@ public final class ViewRegistry {
             FxViewLocation location = locationAttribute(file, view.getDefaultLocation());
             int position = intAttribute(file, "position", Integer.MAX_VALUE);
             boolean navigator = booleanAttribute(file, "navigator");
-            registrations.add(new ViewRegistration(id, displayName, iconName, location, position, navigator, view));
+            boolean openAtStartup = booleanAttribute(file, "openAtStartup");
+            registrations.add(new ViewRegistration(id, displayName, iconName, location, position, navigator,
+                    openAtStartup, view));
         }
         return sort(registrations);
+    }
+
+    /** The registration of the view with {@code id}, or {@code null} when it is not registered in the layer. */
+    public static ViewRegistration find(String id) {
+        for (ViewRegistration registration : discover()) {
+            if (registration.id().equals(id)) {
+                return registration;
+            }
+        }
+        return null;
     }
 
     /** Orders views by location, then position, then id, so the layout is stable. */

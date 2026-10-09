@@ -7,6 +7,8 @@ import com.gluonhq.netbeans.nbfx.editor.breadcrumbs.BreadcrumbsBar;
 import com.gluonhq.netbeans.nbfx.editor.codearea.search.SearchSupport;
 import com.gluonhq.netbeans.nbfx.editor.breadcrumbs.BreadcrumbsSupport;
 import com.gluonhq.netbeans.nbfx.editor.completion.CompletionController;
+import com.sun.jfx.incubator.scene.control.richtext.RichTextAreaSkinHelper;
+import com.sun.jfx.incubator.scene.control.richtext.VFlow;
 import javafx.application.Platform;
 import javafx.css.PseudoClass;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -211,9 +213,25 @@ public class CodeEditor implements EditorDocument {
             new CompletionController(fo, codeArea, model).install();
             // The registry-driven context menu (Cut / Copy / Paste and whatever modules add)
             EditorContextMenu.install(codeArea);
+            // Shortcut+Click follows the identifier under the mouse (Go to Declaration, for Java)
+            HyperlinkSupport.install(codeArea, fo, model, decorator);
+            // The gutter's annotations (the override badges, for Java), from the registered provider
+            subscription = subscription.and(AnnotationSupport.install(fo, model, lineDecorator, this::refreshLineDecorator));
         }
 
         buffer.attach(this);
+    }
+
+    /** The point under the caret, from the skin's {@code VFlow}, as the completion popup is anchored. */
+    @Override
+    public Point2D getCaretScreenPosition() {
+        try {
+            VFlow vFlow = RichTextAreaSkinHelper.getVFlow(codeArea);
+            com.sun.jfx.incubator.scene.control.richtext.CaretInfo caret = vFlow == null ? null : vFlow.getCaretInfo();
+            return caret == null ? null : vFlow.getContentPane().localToScreen(caret.getMinX(), caret.getMaxY());
+        } catch (RuntimeException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -512,6 +530,11 @@ public class CodeEditor implements EditorDocument {
     @Override
     public ObservableValue<CaretInfo> caretInfoProperty() {
         return caretInfo.property();
+    }
+
+    @Override
+    public ObservableValue<Number> textVersionProperty() {
+        return buffer.textVersionProperty();
     }
 
     /**

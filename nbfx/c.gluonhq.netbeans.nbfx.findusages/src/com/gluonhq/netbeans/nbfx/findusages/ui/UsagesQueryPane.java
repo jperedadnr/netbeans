@@ -2,6 +2,7 @@ package com.gluonhq.netbeans.nbfx.findusages.ui;
 
 import com.gluonhq.netbeans.nbfx.api.ContentManager;
 import com.gluonhq.netbeans.nbfx.api.editor.EditorPreview;
+import com.gluonhq.netbeans.nbfx.api.view.CellBreadth;
 import com.gluonhq.netbeans.nbfx.api.project.OpenProject;
 import com.gluonhq.netbeans.nbfx.api.project.ProjectRegistry;
 import com.gluonhq.netbeans.nbfx.findusages.model.Usage;
@@ -71,6 +72,7 @@ final class UsagesQueryPane extends HBox {
     private final BooleanProperty previewVisible = new SimpleBooleanProperty(false);
     private final ReadOnlyObjectWrapper<ViewState> viewState = new ReadOnlyObjectWrapper<>();
     private final TreeView<UsageNode> tree = new TreeView<>();
+    private final CellBreadth breadth = new CellBreadth();
     private final TreeItem<UsageNode> root = new TreeItem<>();
     private final TreeItem<UsageNode> header = new TreeItem<>();
     private final Label status = new Label();
@@ -111,7 +113,7 @@ final class UsagesQueryPane extends HBox {
         tree.setRoot(root);
         tree.setShowRoot(false);
         tree.setMinHeight(0);
-        tree.setCellFactory(view -> new UsageTreeCell());
+        tree.setCellFactory(view -> new UsageTreeCell(breadth));
         tree.getStyleClass().add("usages-tree");
         tree.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
@@ -450,6 +452,7 @@ final class UsagesQueryPane extends HBox {
         List<TreeItem<UsageNode>> items = new ArrayList<>();
         items.add(header);
         items.addAll(UsageTreeBuilder.build(List.copyOf(query.getUsages()), flavour.get(), filters));
+        breadth.reset();
         root.getChildren().setAll(items);
         if (!expandToggle.isSelected()) {
             collapseAll();

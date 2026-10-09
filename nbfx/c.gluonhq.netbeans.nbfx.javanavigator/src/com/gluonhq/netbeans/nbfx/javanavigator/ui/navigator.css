@@ -1,0 +1,188 @@
+/* Navigator view: view selector row, members tree, filter bar. */
+
+.navigator-view {
+    -fx-background-color: -fx-background;
+    -member-type-color: #707070;
+    -member-inherited-color: #7D694A;
+}
+
+.navigator-header {
+    -fx-padding: 3 4 3 4;
+    -fx-spacing: 4;
+    -fx-alignment: center-left;
+    -fx-border-color: transparent transparent #D9D9D9 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.navigator-header > .combo-box {
+    -fx-pref-height: 24;
+}
+
+.navigator-header > .navigator-tool-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 3;
+    -fx-content-display: graphic-only;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-pref-width: 24;
+    -fx-pref-height: 24;
+}
+.navigator-header > .navigator-tool-button:hover {
+    -fx-background-color: #E0E0E0;
+}
+.navigator-header > .navigator-tool-button:disabled {
+    -fx-opacity: 0.4;
+}
+
+.navigator-empty {
+    -fx-text-fill: derive(-fx-text-base-color, 40%);
+    -fx-padding: 12;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.members-tree {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.member-cell {
+    -fx-padding: 1 4 1 2;
+}
+
+/* Rows are Text nodes, so the fill follows the tree's text colours by hand. */
+.member-label .member-text {
+    -fx-fill: -fx-text-base-color;
+}
+.member-label .member-type {
+    -fx-fill: -member-type-color;
+}
+.member-label .member-deprecated {
+    -fx-strikethrough: true;
+}
+.member-cell:inherited .member-label .member-text {
+    -fx-fill: -member-inherited-color;
+}
+
+.tree-view:focused > .virtual-flow > .clipped-container > .sheet > .member-cell:selected:filled .member-label > Text {
+    -fx-fill: white;
+}
+
+/* Horizontal filter bar along the bottom: flat toggle buttons, overflow menu when the pane is narrow. */
+.tool-bar.navigator-filters {
+    -fx-padding: 2 3 2 3;
+    -fx-spacing: 2;
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: #D9D9D9 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.tool-bar.navigator-filters > .container > .separator:vertical {
+    -fx-padding: 0 2 0 2;
+    -fx-pref-height: 20;
+}
+
+.tool-bar.navigator-filters > .container > .navigator-tool-button,
+.tool-bar.navigator-filters > .tool-bar-overflow-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 3;
+    -fx-content-display: graphic-only;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-pref-width: 24;
+    -fx-pref-height: 24;
+}
+
+.tool-bar.navigator-filters > .container > .navigator-tool-button:hover,
+.tool-bar.navigator-filters > .tool-bar-overflow-button:hover {
+    -fx-background-color: #E0E0E0;
+}
+
+.tool-bar.navigator-filters > .container > .navigator-tool-button:armed,
+.tool-bar.navigator-filters > .container > .navigator-tool-button:selected {
+    -fx-background-color: #D0D0D0;
+}
+
+.tool-bar.navigator-filters > .container > .navigator-tool-button:selected:hover {
+    -fx-background-color: #C4C4C4;
+}
+
+/* The Implementors/Overridders popup of Go to Implementation. */
+.implementations-popup {
+    -fx-min-width: 600;
+    -fx-background-color: white;
+    -fx-border-color: #A8A8A8;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 8, 0, 0, 2);
+}
+.implementations-popup > .implementations-title {
+    -fx-padding: 4 8 4 8;
+    -fx-alignment: center;
+    -fx-background-color: #F2F2F2;
+    -fx-border-color: transparent transparent #D9D9D9 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.implementations-popup > .list-view {
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+}
+.implementations-popup > .list-view .implementation-cell {
+    -fx-padding: 2 8 2 6;
+}
+
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell > HBox > .implementation-name,
+.implementations-popup > .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:focused:filled > HBox > .implementation-name,
+.implementations-popup > .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:selected:filled > HBox > .implementation-name {
+    -fx-text-fill: black;
+}
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell > HBox > .implementation-enclosing,
+.implementations-popup > .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:focused:filled > HBox > .implementation-enclosing,
+.implementations-popup > .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:selected:filled > HBox > .implementation-enclosing {
+    -fx-text-fill: #707070;
+}
+/* The "is implemented / overridden" badge: a down arrow, 7 x 9, drawn by -fx-shape. */
+.implementations-popup .implementation-arrow {
+    -fx-shape: "M2.5,0 H4.5 V5 H7 L3.5,9 L0,5 H2.5 Z";
+    -fx-scale-shape: false;
+    -fx-position-shape: true;
+    -fx-min-width: 7;
+    -fx-pref-width: 7;
+    -fx-max-width: 7;
+    -fx-min-height: 9;
+    -fx-pref-height: 9;
+    -fx-max-height: 9;
+    -fx-translate-x: -3;
+    -fx-translate-y: 5;
+}
+/* An ancestor (what the method overrides): the arrow points up. */
+.implementations-popup .implementation-arrow:up {
+    -fx-shape: "M2.5,9 H4.5 V4 H7 L3.5,0 L0,4 H2.5 Z";
+    -fx-translate-y: -5;
+}
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell > HBox > .implementation-arrow,
+.implementations-popup > .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:focused:filled > HBox > .implementation-arrow,
+.implementations-popup > .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:selected:filled > HBox > .implementation-arrow {
+    -fx-background-color: #202020;
+}
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:filled:hover > HBox > .implementation-arrow,
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:focused:filled > HBox > .implementation-arrow,
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:filled:selected > HBox > .implementation-arrow {
+    -fx-background-color: white;
+}
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:filled:hover > HBox > .label,
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:focused:filled > HBox > .label,
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:focused:filled:hover > HBox > .label {
+    -fx-text-fill: white;
+}
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:filled:selected > HBox > .label,
+.implementations-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell.implementation-cell:filled:selected:hover > HBox > .label {
+    -fx-text-fill: white;
+}

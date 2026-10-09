@@ -1,6 +1,7 @@
 package com.gluonhq.netbeans.nbfx.api.actions;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.scene.Node;
 import javafx.scene.input.KeyCombination;
 
 /**
@@ -34,6 +35,18 @@ public interface Command {
      * @return the accelerator, or {@code null} if the command has no default shortcut
      */
     default KeyCombination getAccelerator() {
+        return null;
+    }
+
+    /**
+     * A new icon node for the menu items and buttons built from this command, or {@code null} for
+     * a command shown by its text alone. A new node is built on each call, as a scene graph node has
+     * a single parent. The application shell's own commands get their icons from the shell instead,
+     * so this is for the commands other modules contribute (e.g. a view's Window-menu entry).
+     *
+     * @return a new icon node, or {@code null}
+     */
+    default Node getIcon() {
         return null;
     }
 

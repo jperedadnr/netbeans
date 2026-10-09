@@ -127,8 +127,15 @@ final class LineSeparatorSupport {
         };
     }
 
-    /** Stores {@code separator} in the {@link #ATTR} attribute when it changed, logging failures. */
+    /**
+     * Stores {@code separator} in the {@link #ATTR} attribute when it changed, logging failures. A
+     * file that cannot be written - a JDK or library source in a zip - takes no attributes either;
+     * the attribute being a cache of the scan, it is simply not kept for such a file.
+     */
     static void store(FileObject fileObject, String separator) {
+        if (!fileObject.canWrite()) {
+            return;
+        }
         try {
             if (!Objects.equals(fileObject.getAttribute(ATTR), separator)) {
                 fileObject.setAttribute(ATTR, separator);

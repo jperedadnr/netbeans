@@ -18,7 +18,6 @@
  */
 package com.gluonhq.netbeans.nbfx.annotations.processors;
 
-import com.gluonhq.netbeans.nbfx.annotations.FxLayer;
 import com.gluonhq.netbeans.nbfx.annotations.FxMenuRegistration;
 import com.gluonhq.netbeans.nbfx.annotations.FxMenuRegistrations;
 import java.util.Set;
@@ -32,9 +31,9 @@ import org.openide.filesystems.annotations.LayerGenerationException;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
- * Generates the layer entry for {@link FxMenuRegistration}: the {@code NbFx/Menus/<id>} folder with
- * its {@code position} (and optional display name), so the window can build the set and order of
- * menus from the layer.
+ * Generates the layer entry for {@link FxMenuRegistration}: the {@code NbFx/<path>/<id>} folder
+ * with its {@code position} (and optional display name and separator), so the window can build the
+ * set and order of menus - and of the submenus of any surface - from the layer.
  *
  * @since 1.0
  */
@@ -73,10 +72,13 @@ public class FxMenuRegistrationProcessor extends LayerGeneratingProcessor {
 
     private void register(Element element, FxMenuRegistration registration)
             throws LayerGenerationException {
-        File folder = layer(element).folder(FxLayer.MENUS + "/" + registration.id());
+        File folder = layer(element).folder("NbFx/" + registration.path() + "/" + registration.id());
         folder.intvalue("position", registration.position());
         if (!registration.displayName().isEmpty()) {
-            folder.stringvalue("displayName", registration.displayName());
+            folder.bundlevalue("displayName", registration.displayName());
+        }
+        if (registration.separatorBefore()) {
+            folder.boolvalue("separatorBefore", true);
         }
         folder.write();
     }

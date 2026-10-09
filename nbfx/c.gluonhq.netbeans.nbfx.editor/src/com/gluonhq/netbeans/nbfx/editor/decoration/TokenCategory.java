@@ -13,6 +13,7 @@ public enum TokenCategory {
     KEYWORD("keyword", "-fx-fill: -code-keyword-color;"),
     KEYWORD_DIRECTIVE("keyword-directive", "-fx-fill: -code-keyword-directive-color;"),
     STRING("string", "-fx-fill: -code-string-color;"),
+    CHARACTER("character", "-fx-fill: -code-string-color;"),
     COMMENT("comment", "-fx-fill: -code-comment-color;"),
     IDENTIFIER("identifier", null),
 
@@ -56,7 +57,10 @@ public enum TokenCategory {
 
     OCCURRENCE("occurrence", "occurrence"),
 
-    SEARCH_MATCH("search-match", "search-match");
+    SEARCH_MATCH("search-match", "search-match"),
+
+    /** The identifier under the mouse while the shortcut key is held: a link, as NetBeans shows hyperlinks. */
+    HYPERLINK("hyperlink", "-fx-fill: -code-hyperlink-color; -fx-underline: true;");
 
     /** Prefix that marks a style as a squiggly underline rather than an inline text style. */
     public static final String SQUIGGLY_PREFIX = "squiggly";

@@ -5,20 +5,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
 import org.netbeans.api.java.lexer.JavaTokenId;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
 
 /**
- * Renders the line of a usage as a {@link TextFlow}: the line number, then the line's text coloured
- * by the Java lexer (keywords, strings, comments; style classes {@code usage-keyword},
- * {@code usage-string}, {@code usage-comment}) with the occurrence in bold ({@code usage-occurrence}),
- * as NetBeans' Find Usages window shows it.
+ * Splits the line of a usage into styled {@link Run}s: the line number, then the line's text
+ * coloured by the Java lexer (keywords, strings, comments; style classes {@code usage-keyword},
+ * {@code usage-string}, {@code usage-comment}) with the occurrence in bold
+ * ({@code usage-occurrence}), as NetBeans' Find Usages window shows it. The runs are plain data:
+ * {@link UsageTreeCell} draws them with the text nodes it reuses from row to row.
  */
 final class UsageLineRenderer {
+
+    /**
+     * One run of a line, with one style.
+     *
+     * @param text       the run's text, never empty
+     * @param styleClass the style class of its colour
+     * @param occurrence whether it is (part of) the occurrence, shown in bold
+     */
+    record Run(String text, String styleClass, boolean occurrence) {
+    }
 
     /** Identifiers the lexer does not know as keywords but the editor colours as such. */
     private static final Set<String> CONTEXTUAL_KEYWORDS = Set.of("sealed", "permits", "record", "yield");
@@ -26,7 +35,7 @@ final class UsageLineRenderer {
     private UsageLineRenderer() {
     }
 
-    static TextFlow render(Usage usage) {
+    static List<Run> runs(Usage usage) {
         String line = usage.lineText();
         int from = clamp(usage.start() - usage.lineStart(), 0, line.length());
         int to = clamp(usage.end() - usage.lineStart(), from, line.length());
@@ -39,8 +48,7 @@ final class UsageLineRenderer {
             trail--;
         }
 
-        TextFlow flow = new TextFlow();
-        flow.getStyleClass().add("usage-line");
+        List<Run> flow = new ArrayList<>();
         addText(flow, usage.line() + ": ", "usage-line-number", false);
 
         // A usage inside a block comment: the line alone would not lex as a comment.
@@ -109,16 +117,10 @@ final class UsageLineRenderer {
         };
     }
 
-    private static void addText(TextFlow flow, String content, String styleClass, boolean occurrence) {
-        if (content.isEmpty()) {
-            return;
+    private static void addText(List<Run> flow, String content, String styleClass, boolean occurrence) {
+        if (!content.isEmpty()) {
+            flow.add(new Run(content, styleClass, occurrence));
         }
-        Text text = new Text(content);
-        text.getStyleClass().add(styleClass);
-        if (occurrence) {
-            text.getStyleClass().add("usage-occurrence");
-        }
-        flow.getChildren().add(text);
     }
 
     private static int clamp(int value, int min, int max) {

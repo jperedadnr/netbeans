@@ -70,6 +70,41 @@ public class ActionLayerReaderTest {
     @Test
     public void nullFolderYieldsEmptyList() {
         assertEquals(List.of(), ActionLayerReader.read((FileObject) null));
+        assertEquals(List.of(), ActionLayerReader.readEntries((FileObject) null));
+    }
+
+    @Test
+    public void readsSubmenusAmongReferences() throws IOException {
+        FileObject menu = menuFolder();
+        addRef(menu, "save", "save", 10, false);
+        FileObject navigate = menu.createFolder("Navigate");
+        navigate.setAttribute("displayName", "Navigate...");
+        navigate.setAttribute("position", 20);
+        navigate.setAttribute("separatorBefore", true);
+        addRef(navigate, "goTo", "goTo", 10, false);
+        FileObject inspect = navigate.createFolder("Inspect");
+        inspect.setAttribute("position", 20);
+        addRef(inspect, "members", "members", 10, false);
+        addRef(menu, "run", "run", 30, false);
+
+        List<FxMenuEntry> entries = ActionLayerReader.readEntries(menu);
+
+        assertEquals(3, entries.size());
+        assertEquals("save", ((FxActionRef) entries.get(0)).actionId());
+        FxSubmenu submenu = (FxSubmenu) entries.get(1);
+        assertEquals("Navigate", submenu.id());
+        assertEquals("Navigate...", submenu.displayName());
+        assertTrue(submenu.separatorBefore());
+        assertEquals(2, submenu.entries().size());
+        assertEquals("goTo", ((FxActionRef) submenu.entries().get(0)).actionId());
+        FxSubmenu nested = (FxSubmenu) submenu.entries().get(1);
+        // A folder without a display name is titled by its name.
+        assertEquals("Inspect", nested.displayName());
+        assertEquals("members", ((FxActionRef) nested.entries().get(0)).actionId());
+        assertEquals("run", ((FxActionRef) entries.get(2)).actionId());
+        // The flat reading keeps ignoring the folders.
+        assertEquals(List.of("save", "run"),
+                ActionLayerReader.read(menu).stream().map(FxActionRef::actionId).toList());
     }
 
     private static FileObject menuFolder() throws IOException {

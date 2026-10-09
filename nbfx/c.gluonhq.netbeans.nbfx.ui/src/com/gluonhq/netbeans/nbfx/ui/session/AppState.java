@@ -10,6 +10,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,6 +54,8 @@ public final class AppState {
     private static final String PROJECT_OPEN = "project.open";
     /** The path of the project that was selected at exit. */
     private static final String PROJECT_SELECTED = "project.selected";
+    /** The default views the user has been shown once; see {@link #getIntroducedViews()}. */
+    private static final String VIEWS_INTRODUCED = "views.introduced";
     private static final String TREE_EXPANDED_NODE = "tree.expanded";
     private static final String TREE_SELECTED_NODE = "tree.selected";
     private static final String LAYOUT_NODE = "layout";
@@ -367,6 +370,33 @@ public final class AppState {
             }
         }
         return List.copyOf(paths);
+    }
+
+    /**
+     * The ids of the views registered to open at start-up that have already been introduced: docked
+     * once at their default location. A default view added by a newer version is missing from a
+     * persisted layout exactly like one the user closed, so this records which is which: a view not
+     * listed here has never been offered and is docked once, then listed.
+     */
+    public Set<String> getIntroducedViews() {
+        String raw = get(VIEWS_INTRODUCED, "");
+        Set<String> ids = new LinkedHashSet<>();
+        for (String id : raw.split("\n")) {
+            if (!id.isBlank()) {
+                ids.add(id);
+            }
+        }
+        return ids;
+    }
+
+    /** Records {@code ids} as introduced (see {@link #getIntroducedViews()}); persisted immediately. */
+    public void setIntroducedViews(Set<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            prefs.remove(VIEWS_INTRODUCED);
+        } else {
+            prefs.put(VIEWS_INTRODUCED, String.join("\n", ids));
+        }
+        flush();
     }
 
     /** The path of the project that was selected when the application last exited, or {@code null}. */

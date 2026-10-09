@@ -46,6 +46,8 @@ public class ViewRegistryTest {
         zeta.setAttribute("displayName", "Zeta");
         zeta.setAttribute("location", "RIGHT");
         zeta.setAttribute("position", 20);
+        zeta.setAttribute("iconName", "demo/zeta.png");
+        zeta.setAttribute("openAtStartup", true);
         FileObject alpha = folder.createData("alpha", "instance");
         alpha.setAttribute("displayName", "Alpha");
         alpha.setAttribute("location", "LEFT");
@@ -59,9 +61,13 @@ public class ViewRegistryTest {
                 registrations.stream().map(ViewRegistration::id).toList());
         assertEquals(FxViewLocation.LEFT, registrations.get(0).location());
         assertTrue(registrations.get(0).navigator());
+        assertFalse(registrations.get(0).openAtStartup());
+        assertEquals("", registrations.get(0).iconName());
         assertEquals("Zeta", registrations.get(1).displayName());
         assertEquals(FxViewLocation.RIGHT, registrations.get(1).location());
         assertFalse(registrations.get(1).navigator());
+        assertTrue(registrations.get(1).openAtStartup());
+        assertEquals("demo/zeta.png", registrations.get(1).iconName());
     }
 
     @Test

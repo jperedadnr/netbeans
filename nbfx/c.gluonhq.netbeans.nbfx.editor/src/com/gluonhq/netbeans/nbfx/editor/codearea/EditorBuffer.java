@@ -18,6 +18,8 @@ import java.util.logging.Logger;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyLongProperty;
+import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import jfx.incubator.scene.control.richtext.TextPos;
 import jfx.incubator.scene.control.richtext.model.CodeTextModel;
@@ -82,7 +84,13 @@ final class EditorBuffer {
     final BaseSyntaxDecorator decorator;
 
     private final ReadOnlyBooleanWrapper modified = new ReadOnlyBooleanWrapper(this, "modified", false);
-    /** Whether the editors accept edits; cleared when the file changes on disk under unsaved edits. */
+    /** Grows with every change to the content; see {@link com.gluonhq.netbeans.nbfx.api.editor.EditorDocument#textVersionProperty()}. */
+    private final ReadOnlyLongWrapper textVersion = new ReadOnlyLongWrapper(this, "textVersion", 0);
+    /**
+     * Whether the editors accept edits: never for a file that cannot be written (a JDK source in
+     * {@code src.zip}, a library's sources jar), and cleared when a file changes on disk under
+     * unsaved edits.
+     */
     private final BooleanProperty editable = new SimpleBooleanProperty(this, "editable", true);
     private final LineSeparatorSupport lineSeparator;
     private final ExternalChangeSupport externalChanges;
@@ -112,6 +120,7 @@ final class EditorBuffer {
 
     private EditorBuffer(FileObject fileObject) {
         this.fileObject = Objects.requireNonNull(fileObject);
+        editable.set(fileObject.canWrite());
         model = new CodeTextModel();
         decorator = SyntaxDecorators.forFile(fileObject);
         model.setDecorator(decorator);
@@ -206,6 +215,7 @@ final class EditorBuffer {
         if (change.isEdit()) {
             snapshot = TextOffsets.text(model);
             updateModified();
+            textVersion.set(textVersion.get() + 1);
             analyze();
         }
     }
@@ -215,7 +225,18 @@ final class EditorBuffer {
         return snapshot;
     }
 
+    /** The number of changes the content has seen so far, as an observable; FX thread. */
+    ReadOnlyLongProperty textVersionProperty() {
+        return textVersion.getReadOnlyProperty();
+    }
+
     private void analyze() {
+        // A source that cannot be written is one of a library or of the JDK (src.zip): it is only
+        // read, and compiling it against the project's class path would flag imports of the
+        // module's internals as errors, so it gets the lexical colouring only.
+        if (!fileObject.canWrite()) {
+            return;
+        }
         try {
             decorator.analyzeInBackground(model);
         } catch (RuntimeException ex) {
@@ -250,6 +271,7 @@ final class EditorBuffer {
         snapshot = TextOffsets.text(model);
         lineSeparator.resetTo(separator);
         updateModified();
+        textVersion.set(textVersion.get() + 1);
         for (int i = 0; i < views.size(); i++) {
             views.get(i).restoreCaretAfterReload(carets.get(i));
         }

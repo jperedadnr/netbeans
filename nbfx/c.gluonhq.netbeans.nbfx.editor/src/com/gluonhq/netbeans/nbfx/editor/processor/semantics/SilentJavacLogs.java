@@ -11,7 +11,8 @@ import java.util.logging.Logger;
  * NetBeans (via {@code org.openide.util.Exceptions}) when {@code javac} NPEs while
  * attributing incomplete source — a well-known transient state during typing,
  * e.g. {@code @SuppressWarnings} without parentheses crashes
- * {@code com.sun.tools.javac.code.Lint.suppressionsFrom}.
+ * {@code com.sun.tools.javac.code.Lint.suppressionsFrom} — or trips one of its own
+ * assertions on code it should accept.
  *
  * <p>Two coordinated mechanisms are exposed:</p>
  * <ul>
@@ -61,11 +62,15 @@ final class SilentJavacLogs {
      * Recognises NPEs (possibly wrapped in {@code IllegalStateException}) thrown by
      * {@code com.sun.tools.javac.*} while attributing incomplete source — typically
      * annotations whose required elements have not been typed yet, e.g.
-     * {@code @SuppressWarnings} (no parens) crashes {@code Lint.suppressionsFrom}.
+     * {@code @SuppressWarnings} (no parens) crashes {@code Lint.suppressionsFrom} —
+     * and javac's own {@code AssertionError}s, internal checks nb-javac trips on valid
+     * code now and then (e.g. {@code Flow.AliveAnalyzer.clearPendingExits} on a labeled
+     * {@code break} in an anonymous class of a library source): neither is ours to
+     * report, and the compilation simply stops short of the phase asked for.
      */
     static boolean isKnownTransientJavacBug(Throwable ex) {
         for (Throwable t = ex; t != null; t = t.getCause()) {
-            if (t instanceof NullPointerException) {
+            if (t instanceof NullPointerException || t instanceof AssertionError) {
                 for (StackTraceElement frame : t.getStackTrace()) {
                     String cls = frame.getClassName();
                     if (cls != null && cls.startsWith("com.sun.tools.javac.")) {

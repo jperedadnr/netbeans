@@ -38,6 +38,57 @@
             </description>
             <class package="com.gluonhq.netbeans.nbfx.api.actions" name="KeyMap"/>
         </change>
+        <change id="layer.submenus">
+            <api name="netbeansfx_api"/>
+            <summary>Submenus read from nested layer folders.</summary>
+            <version major="1" minor="0"/>
+            <date day="9" month="10" year="2026"/>
+            <author login="jpereda"/>
+            <compatibility addition="yes" semantic="compatible"/>
+            <description>
+                Adds <code>FxMenuEntry</code> and <code>FxSubmenu</code>, and
+                <code>ActionLayerReader.readEntries</code>, which reads the action references of a
+                surface together with its nested folders - the submenus declared with
+                <code>@FxMenuRegistration(path = ...)</code>; <code>LayerMenuBuilder</code> builds a
+                <code>Menu</code> for each of them. <code>FxActionRef</code> now implements
+                <code>FxMenuEntry</code>. Under development until the MVP freeze.
+            </description>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="FxMenuEntry"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="FxSubmenu"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="FxActionRef"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="ActionLayerReader"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="LayerMenuBuilder"/>
+        </change>
+        <change id="editor.navigation.spi">
+            <api name="netbeansfx_api"/>
+            <summary>Editor hyperlinks, gutter annotations and element context menus for the Java Navigator.</summary>
+            <version major="1" minor="0"/>
+            <date day="9" month="10" year="2026"/>
+            <author login="jpereda"/>
+            <compatibility addition="yes" semantic="compatible"/>
+            <description>
+                Adds the SPIs the Java Navigator module implements for the editor:
+                <code>HyperlinkProvider</code> (Shortcut+Click goes to the declaration, Alt+Shortcut+Click
+                to the implementations), <code>EditorAnnotationProvider</code> with
+                <code>EditorAnnotation</code> (the gutter glyphs of overriding and overridden methods),
+                <code>ElementContextMenuContributor</code> (items for a source element shown outside the
+                editor, such as a row of the Navigator) and <code>SourceLocation</code>; the Navigate
+                command ids in <code>ActionIds</code>; <code>Command.getIcon()</code> for a command that
+                brings its own icon; <code>EditorDocument.textVersionProperty()</code> and
+                <code>getCaretScreenPosition()</code>; and <code>CellBreadth</code>, the shared cell width
+                that keeps a tree's horizontal scroll bar from oscillating. Under development until the
+                MVP freeze.
+            </description>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="ActionIds"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="Command"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.actions" name="ElementContextMenuContributor"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.editor" name="EditorAnnotation"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.editor" name="EditorAnnotationProvider"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.editor" name="EditorDocument"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.editor" name="HyperlinkProvider"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.elements" name="SourceLocation"/>
+            <class package="com.gluonhq.netbeans.nbfx.api.view" name="CellBreadth"/>
+        </change>
     </changes>
     <htmlcontents>
         <head>

@@ -14,6 +14,7 @@
     -code-xml-doctype-color: #00007C;
     -code-xml-cdata-color: #7C6200;
     -code-xml-pi-color: #00007C;
+    -code-hyperlink-color: #0000FF;
     -fx-padding: 0;
 }
 
@@ -337,53 +338,4 @@
 .code-editor > .editor-side-bars > .breadcrumb-bar > .breadcrumb-close:armed {
     -fx-background-color: #C88080;
     -fx-text-fill: white;
-}
-
-/** Context Menu **/
-.context-menu {
-    -fx-background-color: white;
-    -fx-background-insets: 0;
-    -fx-min-width: 160;
-    -fx-padding: 4 1 4 1;
-    -fx-font-family: System;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 12, 0.10, 0, 8);
-}
-
-.context-menu .menu {
-    -fx-background-color: transparent;
-    -fx-background-insets: 0;
-    -fx-effect: null;
-}
-
-.context-menu .menu:hover .arrow,
-.context-menu .menu:focused .arrow {
-    -fx-background-color: #808080;
-}
-
-.context-menu .menu-item,
-.context-menu .menu {
-    -fx-padding: 4 8 4 8;
-}
-
-.context-menu .menu-item:hover,
-.context-menu .menu-item:focused {
-    -fx-background-color: #2775BF;
-}
-
-.context-menu .menu-item > .label {
-    -fx-text-fill: black;
-}
-
-.context-menu .menu-item:hover > .label,
-.context-menu .menu-item:focused > .label {
-    -fx-text-fill: white;
-}
-
-.context-menu .separator {
-    -fx-padding: 4 0 4 0;
-}
-
-.context-menu .menu-item > .graphic-container > .label > .image-view {
-    -fx-fit-width: 16;
-    -fx-fit-height: 16;
 }

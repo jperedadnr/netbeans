@@ -30,7 +30,8 @@ import org.openide.filesystems.FileUtil;
  * NetBeans menus are assembled from {@code Menu/} folders.
  * <p>
  * References are written by the nbfx annotation processor as {@code <id>.ref} files carrying
- * {@code actionId}, {@code position} and {@code separatorBefore} attributes.
+ * {@code actionId}, {@code position} and {@code separatorBefore} attributes; a submenu is a nested
+ * folder carrying {@code displayName}, {@code position} and {@code separatorBefore}.
  *
  * @since 1.0
  */
@@ -65,6 +66,61 @@ public final class ActionLayerReader {
         }
         refs.sort(Comparator.comparingInt(FxActionRef::position).thenComparing(FxActionRef::actionId));
         return List.copyOf(refs);
+    }
+
+    /**
+     * Reads the entries directly under {@code folder} - its action references and its submenus,
+     * each with their own entries - ordered by position then name.
+     *
+     * @param folder the surface folder (for example {@code NbFx/ContextMenus/Editor}); may be {@code null}
+     * @return the ordered entries, never {@code null}
+     * @since 1.0
+     */
+    public static List<FxMenuEntry> readEntries(FileObject folder) {
+        if (folder == null) {
+            return List.of();
+        }
+        List<FxMenuEntry> entries = new ArrayList<>();
+        for (FileObject child : folder.getChildren()) {
+            if (child.isFolder()) {
+                String displayName = child.getAttribute("displayName") instanceof String s && !s.isEmpty()
+                        ? s : child.getName();
+                entries.add(new FxSubmenu(child.getName(), displayName, position(child), separatorBefore(child),
+                        readEntries(child)));
+            } else if (child.isData() && child.hasExt(REF_EXT)
+                    && child.getAttribute("actionId") instanceof String actionId && !actionId.isBlank()) {
+                entries.add(new FxActionRef(actionId, position(child), separatorBefore(child)));
+            }
+        }
+        entries.sort(Comparator.comparingInt(FxMenuEntry::position).thenComparing(ActionLayerReader::nameOf));
+        return List.copyOf(entries);
+    }
+
+    /**
+     * Reads the entries of the layer folder at {@code layerPath} (for example
+     * {@code "NbFx/ContextMenus/Editor"}), submenus included.
+     *
+     * @param layerPath the layer path; may be {@code null}
+     * @return the ordered entries, never {@code null}
+     * @since 1.0
+     */
+    public static List<FxMenuEntry> readEntries(String layerPath) {
+        return readEntries(layerPath == null ? null : FileUtil.getConfigFile(layerPath));
+    }
+
+    private static int position(FileObject file) {
+        return file.getAttribute("position") instanceof Integer p ? p : Integer.MAX_VALUE;
+    }
+
+    private static boolean separatorBefore(FileObject file) {
+        return Boolean.TRUE.equals(file.getAttribute("separatorBefore"));
+    }
+
+    private static String nameOf(FxMenuEntry entry) {
+        return switch (entry) {
+            case FxActionRef ref -> ref.actionId();
+            case FxSubmenu submenu -> submenu.id();
+        };
     }
 
     /**

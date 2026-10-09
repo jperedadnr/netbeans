@@ -31,12 +31,14 @@ import java.util.Objects;
  * @param iconName    the icon resource name, or an empty string
  * @param location    where the view is docked the first time it is shown
  * @param position    the position relative to the other views
- * @param navigator   whether the view is a navigator docked at start-up
- * @param view        the view
+ * @param navigator     whether the view is a navigator docked at start-up
+ * @param openAtStartup whether the view is part of the default layout: docked at its location on
+ *                      the first run and by Reset Windows
+ * @param view          the view
  * @since 1.0
  */
 public record ViewRegistration(String id, String displayName, String iconName,
-        FxViewLocation location, int position, boolean navigator, ViewProvider view) {
+        FxViewLocation location, int position, boolean navigator, boolean openAtStartup, ViewProvider view) {
 
     public ViewRegistration {
         Objects.requireNonNull(id, "id");

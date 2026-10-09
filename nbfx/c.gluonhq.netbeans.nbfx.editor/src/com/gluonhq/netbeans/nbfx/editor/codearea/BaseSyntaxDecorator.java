@@ -1,7 +1,9 @@
 package com.gluonhq.netbeans.nbfx.editor.codearea;
 
+import com.gluonhq.netbeans.nbfx.api.editor.HyperlinkProvider;
 import com.gluonhq.netbeans.nbfx.editor.decoration.LineDecoration;
 import com.gluonhq.netbeans.nbfx.editor.decoration.MarkedDecoration;
+import com.gluonhq.netbeans.nbfx.editor.decoration.TokenCategory;
 import com.gluonhq.netbeans.nbfx.editor.processor.SourceUtils;
 import com.gluonhq.netbeans.nbfx.editor.processor.lex.BaseLexDecorationProcessor;
 import com.gluonhq.netbeans.nbfx.editor.processor.semantics.TextPosResult;
@@ -36,6 +38,8 @@ public abstract class BaseSyntaxDecorator implements SyntaxDecorator {
     private List<MarkedDecoration> braceDecorations = List.of();
     private List<MarkedDecoration> occurrenceDecorations = List.of();
     private List<MarkedDecoration> searchDecorations = List.of();
+    /** The link shown while the shortcut key is held over an identifier: its start and end, or {@code null}. */
+    private TextPos[] hyperlink;
     /** The selected occurrence left un-highlighted so the selection colour stays visible; {@code null} for none. */
     private SelectionSegment occurrenceExclusion;
     /** The last occurrences as computed, before the exclusion is applied. */
@@ -58,7 +62,75 @@ public abstract class BaseSyntaxDecorator implements SyntaxDecorator {
             return RichParagraph.builder().build();
         }
         ensureSource(model);
-        return LineDecoration.getRichParagraph(text, lineDecorations(index, text));
+        return LineDecoration.getRichParagraph(text, withHyperlink(index, text, lineDecorations(index, text)));
+    }
+
+    /**
+     * Shows {@code start} to {@code end} as a link - the identifier under the mouse while the
+     * shortcut key is held - instead of its text style, refreshing its paragraph; {@code null}s
+     * show none. There is one link at a time.
+     */
+    public final void setHyperlink(CodeTextModel model, TextPos start, TextPos end) {
+        TextPos[] previous = hyperlink;
+        if (start == null || end == null) {
+            hyperlink = null;
+        } else if (previous != null && previous[0].equals(start) && previous[1].equals(end)) {
+            return;
+        } else {
+            hyperlink = new TextPos[] {start, end};
+        }
+        if (previous != null) {
+            fireCaretHighlightChange(model, new int[] {previous[0].index(), previous[1].index()});
+        }
+        if (hyperlink != null) {
+            fireCaretHighlightChange(model, new int[] {start.index(), end.index()});
+        }
+    }
+
+    /**
+     * What the lexer makes of the text at {@code column} of paragraph {@code index}: a comment, a
+     * string or character literal, else code (which includes what the lexer does not style).
+     */
+    public final HyperlinkProvider.TextKind textKindAt(int index, int column) {
+        for (LineDecoration decoration : lexProcessor.getLineDecorations(index)) {
+            if (decoration.start() <= column && column < decoration.end()) {
+                String style = decoration.style();
+                if (TokenCategory.COMMENT.style().equals(style)) {
+                    return HyperlinkProvider.TextKind.COMMENT;
+                }
+                if (TokenCategory.STRING.style().equals(style)) {
+                    return HyperlinkProvider.TextKind.LITERAL;
+                }
+            }
+        }
+        return HyperlinkProvider.TextKind.CODE;
+    }
+
+    /** Removes the link shown by {@link #setHyperlink}, if any. */
+    public final void clearHyperlink(CodeTextModel model) {
+        setHyperlink(model, null, null);
+    }
+
+    /** {@code decorations} with the link's text style over the span of the link on this line, when it has one. */
+    private List<LineDecoration> withHyperlink(int index, String text, List<LineDecoration> decorations) {
+        TextPos[] link = hyperlink;
+        if (link == null || link[0].index() > index || link[1].index() < index) {
+            return decorations;
+        }
+        int start = link[0].index() == index ? link[0].offset() : 0;
+        int end = link[1].index() == index ? link[1].offset() : text.length();
+        if (start >= end) {
+            return decorations;
+        }
+        List<LineDecoration> textStyles = new ArrayList<>();
+        List<LineDecoration> overlays = new ArrayList<>();
+        for (LineDecoration decoration : decorations) {
+            (TokenCategory.isOverlayStyle(decoration.style()) ? overlays : textStyles).add(decoration);
+        }
+        List<LineDecoration> linked = new ArrayList<>(LineDecoration.mergeDecorations(
+                List.of(new LineDecoration(start, end, TokenCategory.HYPERLINK.style())), textStyles));
+        linked.addAll(overlays);
+        return linked;
     }
 
     /** Refreshes the cached source from the model when it was invalidated. */
@@ -97,6 +169,7 @@ public abstract class BaseSyntaxDecorator implements SyntaxDecorator {
             int charsTop, int linesAdded, int charsBottom) {
         lexProcessor.invalidate();
         resetCaretDecorations();
+        hyperlink = null;
     }
 
     /**

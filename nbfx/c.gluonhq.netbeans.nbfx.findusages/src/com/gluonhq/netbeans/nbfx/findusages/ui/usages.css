@@ -124,7 +124,7 @@
     -fx-translate-x: -20;
 }
 
-/* Usage rows are a TextFlow (bold occurrence), so the fill follows the tree's text colours by hand. */
+/* Usage rows are Text nodes (bold occurrence), so the fill follows the tree's text colours by hand. */
 .usage-line .usage-text,
 .usage-line .usage-occurrence {
     -fx-fill: black;

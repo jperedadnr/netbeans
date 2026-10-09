@@ -13,7 +13,7 @@ import org.openide.util.lookup.ServiceProvider;
  * "Find Usages" on a Java file node of the Projects / Files views: searches the usages of the
  * file's top-level type, as NetBeans does on a class node.
  */
-@ServiceProvider(service = FileContextMenuContributor.class)
+@ServiceProvider(service = FileContextMenuContributor.class, position = 100)
 public final class FindUsagesMenuContributor implements FileContextMenuContributor {
 
     @Override

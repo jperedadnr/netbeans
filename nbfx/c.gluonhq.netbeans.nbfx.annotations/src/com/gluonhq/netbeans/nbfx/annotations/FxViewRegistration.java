@@ -46,7 +46,11 @@ public @interface FxViewRegistration {
     /** The display name of the tab; may be a {@code #key} bundle reference. */
     String displayName();
 
-    /** The name of the icon resource shown on the tab, or an empty string for none. */
+    /**
+     * The resource path of the icon shown on the tab, resolved through the system class loader
+     * like NetBeans' {@code iconBase} (for example {@code com/acme/tool/icon.png}), or an empty
+     * string for a tab with its title only. The image is shown at 16 pixels.
+     */
     String iconName() default "";
 
     /** Where the view is docked the first time it is shown. */
@@ -57,4 +61,13 @@ public @interface FxViewRegistration {
 
     /** Whether this view is a navigator docked at start-up. */
     boolean navigator() default false;
+
+    /**
+     * Whether the view is part of the default window layout, like NetBeans'
+     * {@code openAtStartup}: docked at its {@link #location() location} on the first run, when no
+     * layout has been persisted yet, when a newer version first brings the view, and by
+     * <em>Reset Windows</em>. Once the user closes such a view it stays closed across sessions.
+     * Defaults to {@code false}: the view only appears when something shows it.
+     */
+    boolean openAtStartup() default false;
 }

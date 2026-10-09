@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.input.KeyCombination;
@@ -30,8 +31,9 @@ import org.openide.util.Lookup;
 
 /**
  * Builds JavaFX menu items from the action references contributed to a menu surface, resolving each
- * reference against the {@link ActionRegistry}. This is the JavaFX counterpart of the NetBeans
- * action presenters: the menu contents are declared in the layer, not hard-coded in the UI.
+ * reference against the {@link ActionRegistry}, and a {@link Menu} from each nested folder - a
+ * submenu, left out when none of its entries resolves. This is the JavaFX counterpart of the
+ * NetBeans action presenters: the menu contents are declared in the layer, not hard-coded in the UI.
  *
  * @since 1.0
  */
@@ -58,17 +60,49 @@ public final class LayerMenuBuilder {
      * @return the menu items, in order
      */
     public List<MenuItem> build(FileObject folder) {
+        return build(ActionLayerReader.readEntries(folder));
+    }
+
+    /**
+     * Builds the menu items for {@code entries}: an item per reference whose command is registered,
+     * a submenu per {@link FxSubmenu} with any such item, and a separator where an entry asks for
+     * one. Must be called on the JavaFX Application Thread.
+     *
+     * @param entries the entries, in order
+     * @return the menu items, in order
+     * @since 1.0
+     */
+    public List<MenuItem> build(List<FxMenuEntry> entries) {
         List<MenuItem> items = new ArrayList<>();
-        for (FxActionRef ref : ActionLayerReader.read(folder)) {
-            if (ref.separatorBefore() && !items.isEmpty()
+        for (FxMenuEntry entry : entries) {
+            MenuItem item = switch (entry) {
+                case FxActionRef ref -> registry.find(ref.actionId()).map(this::item).orElseGet(() -> {
+                    LOG.warning("No command registered for action reference: " + ref.actionId());
+                    return null;
+                });
+                case FxSubmenu submenu -> submenu(submenu);
+            };
+            if (item == null) {
+                continue;
+            }
+            if (entry.separatorBefore() && !items.isEmpty()
                     && !(items.get(items.size() - 1) instanceof SeparatorMenuItem)) {
                 items.add(new SeparatorMenuItem());
             }
-            registry.find(ref.actionId()).ifPresentOrElse(
-                    command -> items.add(item(command)),
-                    () -> LOG.warning("No command registered for action reference: " + ref.actionId()));
+            items.add(item);
         }
         return items;
+    }
+
+    /** The menu for {@code submenu}, or {@code null} when none of its entries resolves to an item. */
+    private Menu submenu(FxSubmenu submenu) {
+        List<MenuItem> items = build(submenu.entries());
+        if (items.isEmpty()) {
+            return null;
+        }
+        Menu menu = new Menu(submenu.displayName());
+        menu.getItems().setAll(items);
+        return menu;
     }
 
     /**

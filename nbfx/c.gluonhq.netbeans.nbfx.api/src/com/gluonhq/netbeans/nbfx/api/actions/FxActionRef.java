@@ -30,7 +30,7 @@ import java.util.Objects;
  * @param separatorBefore whether a separator is drawn before this entry
  * @since 1.0
  */
-public record FxActionRef(String actionId, int position, boolean separatorBefore) {
+public record FxActionRef(String actionId, int position, boolean separatorBefore) implements FxMenuEntry {
 
     public FxActionRef {
         Objects.requireNonNull(actionId, "actionId");

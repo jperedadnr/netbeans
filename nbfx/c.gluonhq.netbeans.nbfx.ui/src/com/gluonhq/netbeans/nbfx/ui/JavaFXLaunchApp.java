@@ -44,6 +44,7 @@ import com.gluonhq.netbeans.nbfx.api.NavigatorProvider;
 import com.gluonhq.netbeans.nbfx.api.project.OpenProject;
 import com.gluonhq.netbeans.nbfx.api.project.ProjectRegistry;
 import com.gluonhq.netbeans.nbfx.api.progress.FxProgress;
+import com.gluonhq.netbeans.nbfx.api.view.ViewManager;
 import com.gluonhq.netbeans.nbfx.api.view.ViewProvider;
 import com.gluonhq.netbeans.nbfx.file.actions.FileUndoManager;
 import java.io.File;
@@ -158,6 +159,10 @@ public class JavaFXLaunchApp extends Application {
         }
 
         dockArea = createDockArea();
+        if (sessionRestorer.startupLayout().isEmpty()) {
+            // First run: no layout to restore, so the default one also holds the default views.
+            introduceDefaultViews();
+        }
         BorderPane borderPane = new BorderPane(dockArea);
 
         actionBars = new ActionBars();
@@ -170,7 +175,7 @@ public class JavaFXLaunchApp extends Application {
         // The main window's menu/tool bars are scoped to the main pane's own selected editor.
         ObservableValue<EditorDocument> mainScope = mainPaneActiveDocument();
         actionBars.registerWindowCommands(windowActions(mainScope));
-        actionBars.registerEditorContextCommands(file -> revealFileInNavigator(file, 0));
+        actionBars.registerEditorContextCommands(file -> revealFileInNavigator(file, 0), file -> revealFileInNavigator(file, 1));
         ToolBarContainer toolBars = actionBars.createToolBars(mainScope);
         VBox topBars = new VBox(actionBars.createMenuBar(mainScope), toolBars);
         borderPane.setTop(topBars);
@@ -723,6 +728,66 @@ public class JavaFXLaunchApp extends Application {
             navigatorPane.getSelectionModel().select(0);
         }
         dockArea.applyTree(dockArea.defaultTree());
+        showDefaultViews();
+    }
+
+    /**
+     * Docks every view registered to {@linkplain ViewRegistration#openAtStartup() open at start-up}
+     * that has no tab yet at its default location, the way the Navigator is part of NetBeans' default
+     * layout. A view that already has a tab, wherever it is, is left alone. The view shown is the one
+     * published in the Lookup (see {@link #viewById}), as everywhere else, so a command of the view's
+     * module that reaches its instance from the Lookup talks to the content on screen.
+     */
+    private void showDefaultViews() {
+        ViewManager manager = Lookup.getDefault().lookup(ViewManager.class);
+        if (manager == null) {
+            return;
+        }
+        for (ViewRegistration registration : ViewRegistry.discover()) {
+            ViewProvider view = registration.openAtStartup() ? viewById(registration.id()) : null;
+            if (view != null && !manager.isShowing(view)) {
+                manager.show(view);
+            }
+        }
+        appState.setIntroducedViews(defaultViewIds());
+    }
+
+    /**
+     * Docks the default views the user has never been offered - on the first run, all of them; after
+     * an update that brings a new one, that one - and records them as introduced, so a view the user
+     * closes afterwards stays closed. Called once the session's layout is in place, as applying a
+     * layout removes the view tabs it does not mention.
+     */
+    private void introduceDefaultViews() {
+        Set<String> introduced = appState.getIntroducedViews();
+        Set<String> defaults = defaultViewIds();
+        if (introduced.containsAll(defaults)) {
+            return;
+        }
+        ViewManager manager = Lookup.getDefault().lookup(ViewManager.class);
+        if (manager == null) {
+            return;
+        }
+        for (ViewRegistration registration : ViewRegistry.discover()) {
+            ViewProvider view = registration.openAtStartup() && !introduced.contains(registration.id())
+                    ? viewById(registration.id()) : null;
+            if (view != null && !manager.isShowing(view)) {
+                manager.show(view);
+            }
+        }
+        introduced.addAll(defaults);
+        appState.setIntroducedViews(introduced);
+    }
+
+    /** The ids of the views registered to open at start-up, in registration order. */
+    private static Set<String> defaultViewIds() {
+        Set<String> ids = new LinkedHashSet<>();
+        for (ViewRegistration registration : ViewRegistry.discover()) {
+            if (registration.openAtStartup()) {
+                ids.add(registration.id());
+            }
+        }
+        return ids;
     }
 
     /**
@@ -1321,6 +1386,7 @@ public class JavaFXLaunchApp extends Application {
     private void restoreSessionProjects() {
         List<String> projects = appState.getOpenProjects();
         if (projects.isEmpty()) {
+            introduceDefaultViews();
             return;
         }
         sessionSelected = appState.getSelectedProject();
@@ -1337,6 +1403,7 @@ public class JavaFXLaunchApp extends Application {
         }
         if (dirs.isEmpty()) {
             actionBars.refreshRecentProjects();
+            introduceDefaultViews();
             persistSession();
             return;
         }
@@ -1389,6 +1456,7 @@ public class JavaFXLaunchApp extends Application {
             if (owner != null) {
                 projectRegistry.select(owner);
             }
+            introduceDefaultViews();
             persistSession();
         });
     }
