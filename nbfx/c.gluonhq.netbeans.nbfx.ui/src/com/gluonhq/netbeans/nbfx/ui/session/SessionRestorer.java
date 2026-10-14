@@ -1,17 +1,20 @@
 package com.gluonhq.netbeans.nbfx.ui.session;
 
 import com.gluonhq.netbeans.nbfx.docking.DockArea;
+import com.gluonhq.netbeans.nbfx.docking.DockArea.Anchor;
 import com.gluonhq.netbeans.nbfx.docking.DockTree;
 import com.gluonhq.netbeans.nbfx.docking.DockTrees;
 import com.gluonhq.netbeans.nbfx.ui.shell.Docking;
 import com.gluonhq.netbeans.nbfx.ui.shell.EditorSplit;
 import com.gluonhq.netbeans.nbfx.ui.shell.NbfxTabPane;
+import com.gluonhq.netbeans.nbfx.ui.shell.SlidingArea;
 
 import com.gluonhq.netbeans.nbfx.api.ContentManager;
 import com.gluonhq.netbeans.nbfx.api.editor.EditorDocument;
 import com.gluonhq.netbeans.nbfx.api.view.ViewProvider;
 import com.gluonhq.netbeans.nbfx.ui.session.AppState.Layout;
 import com.gluonhq.netbeans.nbfx.ui.session.AppState.PaneLayout;
+import com.gluonhq.netbeans.nbfx.ui.session.AppState.PaneLayout.Minimized;
 import com.gluonhq.netbeans.nbfx.ui.session.AppState.SplitEntry;
 import com.gluonhq.netbeans.nbfx.ui.session.AppState.TabEntry;
 import com.gluonhq.netbeans.nbfx.ui.session.AppState.TabKind;
@@ -21,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -111,51 +115,70 @@ public final class SessionRestorer {
 
     /**
      * Persists the current arrangement of every pane and the tabs it holds, and the shape of the dock
-     * area - pruned of the docked panes that are not persisted, so its leaves still match.
+     * area - pruned of the docked panes that are not persisted, so its leaves still match. A pane
+     * minimized to a sliding side is persisted with its side, its slide-in size and the leaf of the
+     * (pruned) tree it goes back to.
      */
     private void captureLayout() {
-        List<PaneLayout> panes = new ArrayList<>();
+        Map<TabPane, PaneLayout> captured = new LinkedHashMap<>();
         Set<TabPane> skipped = new HashSet<>();
-        TabPane focusedPane = NbfxTabPane.focusedPane();
-        int focused = -1;
         for (TabPane pane : NbfxTabPane.panesByRole()) {
-            PaneLayout captured = capturePane(pane);
-            if (captured == null) {
+            PaneLayout layout = capturePane(pane);
+            if (layout == null) {
                 skipped.add(pane);
-                continue;
+            } else {
+                captured.put(pane, layout);
             }
-            if (pane == focusedPane) {
-                focused = panes.size();
-            }
-            panes.add(captured);
         }
         DockTree dock = null;
+        List<TabPane> keptLeaves = List.of();
         DockArea<TabPane> area = Docking.area();
         if (area != null) {
             List<TabPane> leaves = area.leaves();
             dock = area.tree().retainLeaves(i -> !skipped.contains(leaves.get(i)));
+            keptLeaves = leaves.stream().filter(leaf -> !skipped.contains(leaf)).toList();
+        }
+        SlidingArea slides = Docking.slides();
+        TabPane focusedPane = NbfxTabPane.focusedPane();
+        List<TabPane> capturedPanes = new ArrayList<>(captured.keySet());
+        List<PaneLayout> panes = new ArrayList<>();
+        int focused = -1;
+        for (Map.Entry<TabPane, PaneLayout> entry : captured.entrySet()) {
+            TabPane pane = entry.getKey();
+            PaneLayout layout = entry.getValue();
+            if (slides != null && slides.isMinimized(pane)) {
+                layout = layout.withMinimized(minimizedState(pane, slides, area, keptLeaves, capturedPanes));
+            }
+            if (pane == focusedPane) {
+                focused = panes.size();
+            }
+            panes.add(layout);
         }
         appState.setSessionLayout(new Layout(panes, focused, dock));
-        int captured = focused;
-        LOG.info(() -> "Captured layout: " + panes.size() + " panes, focused index " + captured
-                + " (" + (captured >= 0 ? panes.get(captured).role() : "none") + ")");
+        int focusedIndex = focused;
+        LOG.info(() -> "Captured layout: " + panes.size() + " panes, focused index " + focusedIndex
+                + " (" + (focusedIndex >= 0 ? panes.get(focusedIndex).role() : "none") + ")");
         LOG.fine(NbfxTabPane::describeFocus);
     }
 
     /**
-     * Captures one pane, or {@code null} if it should not be persisted: a detached pane that is not
-     * (or no longer) in a window, or a detached or docked pane left with no persistable tab.
+     * Captures one pane, or {@code null} if it should not be persisted: the sliding panel's pane, a
+     * detached pane that is not (or no longer) in a window, or a detached or docked pane left with no
+     * persistable tab. A minimized pane's tabs include the one slid in.
      */
     private static PaneLayout capturePane(TabPane pane) {
         PaneRole role = NbfxTabPane.roleOf(pane);
         Stage stage = role == PaneRole.DETACHED ? NbfxTabPane.stageOf(pane) : null;
-        if (role == PaneRole.DETACHED && stage == null) {
+        if (role == PaneRole.SLIDE || (role == PaneRole.DETACHED && stage == null)) {
+            // The sliding panel's tab is captured with the group it is on loan from.
             return null;
         }
+        SlidingArea slides = Docking.slides();
+        boolean minimized = slides != null && slides.isMinimized(pane);
         List<TabEntry> tabs = new ArrayList<>();
-        Tab selected = pane.getSelectionModel().getSelectedItem();
+        Tab selected = minimized ? slides.selectedOf(pane) : pane.getSelectionModel().getSelectedItem();
         int activeIndex = -1;
-        for (Tab tab : pane.getTabs()) {
+        for (Tab tab : minimized ? slides.tabsOf(pane) : pane.getTabs()) {
             TabEntry entry = entryFor(tab);
             if (entry == null) {
                 continue;
@@ -173,6 +196,23 @@ public final class SessionRestorer {
                     stage.getWidth(), stage.getHeight(), tabs, activeIndex);
         }
         return PaneLayout.docked(role, tabs, activeIndex);
+    }
+
+    /**
+     * How the minimized {@code pane} is persisted: its side and slide-in size from the sliding area,
+     * and its anchor as the index of the anchor leaf among the persisted {@code leaves} of the dock
+     * area, or - the anchor leaf being a minimized pane itself - among the persisted {@code panes}
+     * ({@link Minimized#NO_ANCHOR} when it has none, or the leaf is not persisted).
+     */
+    private static Minimized minimizedState(TabPane pane, SlidingArea slides, DockArea<TabPane> area,
+            List<TabPane> leaves, List<TabPane> panes) {
+        Anchor<TabPane> anchor = area == null ? null : area.anchorOf(pane);
+        int leaf = anchor == null ? Minimized.NO_ANCHOR : leaves.indexOf(anchor.leaf());
+        int other = anchor == null || leaf >= 0 || !slides.isMinimized(anchor.leaf())
+                ? Minimized.NO_ANCHOR : panes.indexOf(anchor.leaf());
+        boolean anchored = leaf >= 0 || other >= 0;
+        return new Minimized(slides.sideOf(pane), slides.sizeOf(pane), leaf,
+                anchored ? anchor.side() : null, anchor == null ? Double.NaN : anchor.share(), other);
     }
 
     /** The persistable descriptor of {@code tab}, or {@code null} if it carries no stable id. */
@@ -280,8 +320,9 @@ public final class SessionRestorer {
     /**
      * Moves the existing tabs into the panes described by {@code layout}. The dock area is first given
      * the shape the layout recorded (creating the docked panes its tabs call for), then the docked
-     * panes are filled in place, and each detached pane is recreated as a new window. View tabs the
-     * layout does not mention were closed by the user and are removed.
+     * panes are filled in place, each minimized pane is minimized again to its side (anchored to the
+     * leaf of the shaped area it goes back to) and filled, and each detached pane is recreated as a
+     * new window. View tabs the layout does not mention were closed by the user and are removed.
      *
      * @param editors receives every editor tab placed, with the entry it was restored from
      * @return the pane that should receive focus, or {@code null} when the layout does not say
@@ -290,7 +331,9 @@ public final class SessionRestorer {
         Set<Tab> placed = new LinkedHashSet<>();
         PaneLayout focusedPane = layout.focusedPane();
         TabPane focusTarget = null;
-        Map<PaneLayout, TabPane> dockedTargets = shapeArea(layout);
+        Shaped shaped = shapeArea(layout);
+        Map<PaneLayout, TabPane> dockedTargets = shaped.targets();
+        Map<PaneLayout, TabPane> minimizedTargets = new IdentityHashMap<>();
         for (PaneLayout pane : layout.panes()) {
             List<Tab> tabs = resolveTabs(pane, cm, placed, editors);
             placed.addAll(tabs);
@@ -309,9 +352,17 @@ public final class SessionRestorer {
                 if (tabs.isEmpty() && !pane.role().isPermanent()) {
                     continue;
                 }
-                TabPane target = dockedTargets.containsKey(pane)
-                        ? dockedTargets.get(pane)
-                        : NbfxTabPane.paneWithRole(pane.role());
+                TabPane target;
+                if (pane.isMinimized() && pane.role() != PaneRole.MAIN) {
+                    target = minimizedTarget(pane, shaped);
+                    if (target != null) {
+                        minimizedTargets.put(pane, target);
+                    }
+                } else {
+                    target = dockedTargets.containsKey(pane)
+                            ? dockedTargets.get(pane)
+                            : NbfxTabPane.paneWithRole(pane.role());
+                }
                 if (target == null) {
                     LOG.warning("No " + pane.role() + " pane to restore into");
                     continue;
@@ -333,23 +384,85 @@ public final class SessionRestorer {
                 }
             }
         }
+        anchorMinimizedToEachOther(layout, minimizedTargets);
         closeUnplacedViewTabs(placed);
         return focusTarget;
     }
 
     /**
-     * Gives the dock area the shape {@code layout} recorded and maps every docked pane of the layout
-     * to the live pane it fills. A permanent pane the recorded tree leaves out was hidden (empty) when
-     * captured and stays out until it receives a tab. When the recorded tree does not fit the panes
-     * (or there is none, as in layouts written before docking) the docked panes are stacked below the
-     * permanent ones in their default arrangement instead.
+     * Sets the anchors between minimized panes - a group that goes back next to another minimized
+     * group - once every minimized pane of the layout has been recreated, as they refer to each
+     * other by their position in the layout.
      */
-    private static Map<PaneLayout, TabPane> shapeArea(Layout layout) {
+    private static void anchorMinimizedToEachOther(Layout layout, Map<PaneLayout, TabPane> targets) {
+        SlidingArea slides = Docking.slides();
+        if (slides == null) {
+            return;
+        }
+        for (Map.Entry<PaneLayout, TabPane> entry : targets.entrySet()) {
+            Minimized state = entry.getKey().minimized();
+            int other = state.anchorPane();
+            if (state.anchorIndex() >= 0 || other < 0 || other >= layout.panes().size()) {
+                continue;
+            }
+            TabPane leaf = targets.get(layout.panes().get(other));
+            if (leaf != null && leaf != entry.getValue()) {
+                slides.minimize(entry.getValue(), state.side(), state.size(),
+                        new Anchor<>(leaf, state.anchorSide(), state.anchorShare()));
+            }
+        }
+    }
+
+    /**
+     * The pane a minimized pane of the layout is restored into: the permanent pane playing its role,
+     * or a new docked pane; minimized again to the side the layout recorded, anchored to the leaf of
+     * the shaped area it went back to - only when the area took the recorded shape, as the anchor
+     * is an index into that tree. Returns {@code null} without a sliding area to minimize to.
+     */
+    private static TabPane minimizedTarget(PaneLayout pane, Shaped shaped) {
+        SlidingArea slides = Docking.slides();
+        if (slides == null) {
+            return null;
+        }
+        TabPane target = pane.role().isPermanent()
+                ? NbfxTabPane.paneWithRole(pane.role())
+                : new NbfxTabPane(PaneRole.DOCKED);
+        if (target == null) {
+            return null;
+        }
+        Minimized state = pane.minimized();
+        Anchor<TabPane> anchor = null;
+        if (shaped.recordedShape() && state.anchorIndex() >= 0 && state.anchorIndex() < shaped.leaves().size()) {
+            TabPane leaf = shaped.leaves().get(state.anchorIndex());
+            if (leaf != target) {
+                anchor = new Anchor<>(leaf, state.anchorSide(), state.anchorShare());
+            }
+        }
+        slides.minimize(target, state.side(), state.size(), anchor);
+        return target;
+    }
+
+    /**
+     * The shaped dock area: the live pane each docked pane of the layout fills, the area's leaves in
+     * depth-first order, and whether the area took the recorded shape (so the layout's leaf indexes
+     * name those leaves) rather than the fallback.
+     */
+    private record Shaped(Map<PaneLayout, TabPane> targets, List<TabPane> leaves, boolean recordedShape) {}
+
+    /**
+     * Gives the dock area the shape {@code layout} recorded and maps every docked pane of the layout
+     * to the live pane it fills. A permanent pane the recorded tree leaves out was hidden (empty) or
+     * minimized when captured and stays out until it receives a tab (or is minimized again). When
+     * the recorded tree does not fit the panes (or there is none, as in layouts written before
+     * docking) the docked panes are stacked below the permanent ones in their default arrangement
+     * instead.
+     */
+    private static Shaped shapeArea(Layout layout) {
         Map<PaneLayout, TabPane> targets = new IdentityHashMap<>();
         DockArea<TabPane> area = Docking.area();
         List<PaneLayout> docked = layout.dockedPanes();
         if (area == null || docked.isEmpty()) {
-            return targets;
+            return new Shaped(targets, area == null ? List.of() : area.leaves(), false);
         }
         DockTree recorded = layout.dock();
         DockTree tree = recorded;
@@ -363,6 +476,7 @@ public final class SessionRestorer {
                 }
             }
         }
+        boolean recordedShape = leafPanes != null;
         if (leafPanes == null) {
             if (recorded != null) {
                 LOG.warning(() -> "The recorded dock tree " + DockTrees.format(recorded)
@@ -380,7 +494,7 @@ public final class SessionRestorer {
                 targets.put(pane, area.primary(pane.role().name()));
             }
         }
-        return targets;
+        return new Shaped(targets, leaves, recordedShape);
     }
 
     /**

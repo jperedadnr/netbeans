@@ -6,17 +6,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.SequencedMap;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
@@ -122,6 +126,12 @@ import javafx.scene.layout.StackPane;
  * the panes would dock, shows it with {@link #showDropLine}, and on the drop either
  * {@linkplain #split(DropTarget) splits} a new pane there and moves the component into it or, when
  * the component is the last of its pane, {@linkplain #relocate relocates} that pane.
+ * <p>
+ * A pane other than the main one can also be <em>minimized</em>: taken out of the area, with its
+ * components, while the host shows it some other way - as a bar of buttons along the window's edge
+ * that slides the components in on demand, the way NetBeans minimizes a window group to a sliding
+ * side - and {@linkplain #restore put back} where it was later. {@link #minimizedPanes()} lists the
+ * minimized panes for the host to follow, and {@link #anchorOf} tells where each one goes back.
  */
 public final class DockArea<N extends Node> extends StackPane {
 
@@ -157,8 +167,14 @@ public final class DockArea<N extends Node> extends StackPane {
     private final SequencedMap<String, N> primaries = new LinkedHashMap<>();
     private final List<Double> defaultDividers;
     private Node root;
-    /** Where each hidden permanent pane goes back: next to this leaf, on this side; absent while it shows. */
-    private final Map<N, Anchor<N>> primaryAnchors = new HashMap<>();
+    /**
+     * Where each pane that is out of the area - a hidden empty permanent pane, or a minimized one -
+     * goes back; absent for a pane that shows, or that has nowhere in particular to go back to.
+     */
+    private final Map<N, Anchor<N>> anchors = new HashMap<>();
+    /** The panes minimized out of the area, in the order they were minimized; see {@link #minimize}. */
+    private final ObservableList<N> minimized = FXCollections.observableArrayList();
+    private final ObservableList<N> minimizedView = FXCollections.unmodifiableObservableList(minimized);
     /**
      * Each pane's emptiness, from the host, held here for as long as the pane is in the area: a
      * binding (say over a tab pane's tab list) is only weakly referenced by what it observes, so without
@@ -166,7 +182,34 @@ public final class DockArea<N extends Node> extends StackPane {
      */
     private final Map<N, ObservableValue<Boolean>> emptiness = new HashMap<>();
 
-    private record Anchor<N>(N leaf, Side side) {}
+    /**
+     * Where a pane that is out of the area goes back: next to {@code leaf} - a pane of the area - on
+     * its {@code side}, taking {@code share} of the leaf's space; or, with a {@code null} side,
+     * <em>into</em> {@code leaf}, its components joining that pane's (a single component minimized
+     * out of a pane goes back to it). A leaf that has left the area by then is ignored and the pane
+     * goes back along the side of the area its default shape has it on, or the anchor's side.
+     *
+     * @param <N> the type of the area's panes
+     */
+    public record Anchor<N>(N leaf, Side side, double share) {
+
+        public Anchor {
+            Objects.requireNonNull(leaf);
+            if (Double.isNaN(share) || share <= 0 || share >= 1) {
+                share = DEFAULT_SHARE;
+            }
+        }
+
+        /** An anchor into {@code leaf}: the pane's components join that pane when it goes back. */
+        public static <N> Anchor<N> into(N leaf) {
+            return new Anchor<>(leaf, null, DEFAULT_SHARE);
+        }
+
+        /** Whether the pane goes back into the leaf rather than next to it. */
+        public boolean joins() {
+            return side == null;
+        }
+    }
     /**
      * The line marking the edge a dropped component would dock on. Unmanaged and drawn over the panes, so
      * showing it never moves them (a border would, and the mouse leaving the moved edge would loop).
@@ -250,7 +293,7 @@ public final class DockArea<N extends Node> extends StackPane {
         return primaries.containsValue(pane);
     }
 
-    /** Whether the permanent pane {@code primary} is currently out of the area, being empty. */
+    /** Whether the permanent pane {@code primary} is currently out of the area: empty, or minimized. */
     public boolean isPrimaryHidden(N primary) {
         return isPrimary(primary) && root != primary && parentSplitOf(root, primary) == null;
     }
@@ -275,7 +318,7 @@ public final class DockArea<N extends Node> extends StackPane {
         return primaries.lastEntry().getValue();
     }
 
-    /** Whether {@code pane} is currently one of this area's panes, permanent or docked (a hidden permanent pane is not). */
+    /** Whether {@code pane} is currently one of this area's panes, permanent or docked (a hidden or minimized pane is not). */
     public boolean contains(Node pane) {
         return leaves().contains(pane);
     }
@@ -342,17 +385,20 @@ public final class DockArea<N extends Node> extends StackPane {
 
     /**
      * Rebuilds the area in the shape of {@code tree}, whose permanent leaves must name distinct roles
-     * this area has a pane for - a permanent pane the tree leaves out is hidden. Every docked pane the
-     * area had is disposed and its components moved to the {@linkplain #mainPane() main pane} first,
-     * unless the area already has that shape, in which case only the dividers are set. The docked
-     * panes created here are empty and remove themselves on the next pulse unless a component is
-     * placed in them.
+     * this area has a pane for - a permanent pane the tree leaves out is hidden. Every minimized pane
+     * is {@linkplain #restore restored} first; then every docked pane the area has is disposed and its
+     * components moved to the {@linkplain #mainPane() main pane}, unless the area already has that
+     * shape, in which case only the dividers are set. The docked panes created here are empty and
+     * remove themselves on the next pulse unless a component is placed in them.
      *
      * @return the panes of the new shape, in depth-first order (see {@link #leaves()})
      */
     public List<N> applyTree(DockTree tree) {
         if (!accepts(tree)) {
             throw new IllegalArgumentException("Not a shape of this area's permanent panes: " + DockTrees.format(tree));
+        }
+        for (N pane : List.copyOf(minimized)) {
+            restore(pane);
         }
         if (!DockTrees.sameShape(tree(), tree)) {
             N keeper = mainPane();
@@ -362,7 +408,7 @@ public final class DockArea<N extends Node> extends StackPane {
                     dispose(pane);
                 }
             }
-            primaryAnchors.clear();
+            anchors.clear();
             setRoot(build(tree));
         }
         applyDividers(root, tree);
@@ -395,6 +441,9 @@ public final class DockArea<N extends Node> extends StackPane {
             case Split split -> {
                 SplitPane pane = newSplit(split.orientation());
                 split.children().forEach(child -> pane.getItems().add(build(child)));
+                // The shape's dividers, not the split pane's even default: the tree read back is
+                // the one built, and a pane taken out remembers its true share.
+                applyDividers(pane, split);
                 yield pane;
             }
         };
@@ -462,10 +511,11 @@ public final class DockArea<N extends Node> extends StackPane {
     /**
      * The docked pane right below the permanent pane {@code primary}, created if there is none (see
      * {@link #edgePane}); a hidden primary is shown again first. Returns {@code null} when
-     * {@code primary} is not a permanent pane of this area.
+     * {@code primary} is not a permanent pane of this area, or is {@linkplain #minimize minimized} -
+     * there is no below to a pane that is not showing.
      */
     public N paneBelow(N primary) {
-        if (!isPrimary(primary)) {
+        if (!isPrimary(primary) || isMinimized(primary)) {
             return null;
         }
         if (isPrimaryHidden(primary)) {
@@ -617,6 +667,15 @@ public final class DockArea<N extends Node> extends StackPane {
 
     private N newDockPane() {
         N pane = host.createDockedPane();
+        watchEmptiness(pane);
+        return pane;
+    }
+
+    /** Follows the emptiness of the docked {@code pane}, removing it once its last component leaves. */
+    private void watchEmptiness(N pane) {
+        if (emptiness.containsKey(pane)) {
+            return;
+        }
         emptinessOf(pane).subscribe((_, empty) -> {
             if (Boolean.TRUE.equals(empty)) {
                 // A reorder removes then re-adds a component within the same pulse: check again later.
@@ -624,7 +683,6 @@ public final class DockArea<N extends Node> extends StackPane {
             }
         });
         Platform.runLater(() -> removeIfEmpty(pane));
-        return pane;
     }
 
     private ObservableValue<Boolean> emptinessOf(N pane) {
@@ -643,12 +701,22 @@ public final class DockArea<N extends Node> extends StackPane {
     }
 
     private void removeIfEmpty(N pane) {
-        if (!contains(pane) || isPrimary(pane) || !isEmpty(pane)) {
+        if (isPrimary(pane) || !isEmpty(pane)) {
+            return;
+        }
+        if (minimized.contains(pane)) {
+            // A docked pane exists only while it holds a component, minimized or not.
+            forgetMinimized(pane);
+            dispose(pane);
+            LOG.fine("Removed an emptied minimized pane");
+            return;
+        }
+        if (!contains(pane)) {
             return;
         }
         if (pane == root) {
             // The last docked pane, with every permanent pane hidden: they take the area back.
-            primaryAnchors.clear();
+            anchors.clear();
             setRoot(build(defaultTree()));
             dispose(pane);
             LOG.fine("Removed the last emptied docked pane");
@@ -687,22 +755,143 @@ public final class DockArea<N extends Node> extends StackPane {
             absorbNeighbourInto(primary);
             return;
         }
-        SplitPane parent = parentSplitOf(root, primary);
-        if (parent == null) {
+        Anchor<N> anchor = anchorFor(primary);
+        if (anchor == null) {
             return;
         }
-        int index = parent.getItems().indexOf(primary);
+        anchors.put(primary, anchor);
+        detach(primary);
+        LOG.fine(() -> "Hid the empty " + roleOf(primary) + " pane");
+    }
+
+    /**
+     * Where {@code pane}, one of this area's panes in a split, would go back once taken out: next to
+     * the nearest leaf of its previous neighbour in the split (its next one when it is first), on the
+     * side that puts it back in its place, with the share of their joint space it has now. Returns
+     * {@code null} for a pane that is not in a split (the only pane of the area).
+     */
+    private Anchor<N> anchorFor(N pane) {
+        SplitPane parent = parentSplitOf(root, pane);
+        if (parent == null) {
+            return null;
+        }
+        int index = parent.getItems().indexOf(pane);
         boolean horizontal = parent.getOrientation() == Orientation.HORIZONTAL;
+        double[] sizes = sizesOf(parent);
         List<N> neighbours = new ArrayList<>();
         if (index > 0) {
             collectLeaves(parent.getItems().get(index - 1), neighbours);
-            primaryAnchors.put(primary, new Anchor<>(neighbours.getLast(), horizontal ? Side.RIGHT : Side.BOTTOM));
-        } else {
-            collectLeaves(parent.getItems().get(index + 1), neighbours);
-            primaryAnchors.put(primary, new Anchor<>(neighbours.getFirst(), horizontal ? Side.LEFT : Side.TOP));
+            double share = sizes[index] / (sizes[index] + sizes[index - 1]);
+            return new Anchor<>(neighbours.getLast(), horizontal ? Side.RIGHT : Side.BOTTOM, share);
         }
-        detach(primary);
-        LOG.fine(() -> "Hid the empty " + roleOf(primary) + " pane");
+        collectLeaves(parent.getItems().get(index + 1), neighbours);
+        double share = sizes[index] / (sizes[index] + sizes[index + 1]);
+        return new Anchor<>(neighbours.getFirst(), horizontal ? Side.LEFT : Side.TOP, share);
+    }
+
+    // --- Minimizing ------------------------------------------------------------------------------
+
+    /**
+     * Takes {@code pane} - any pane of this area but the {@linkplain #mainPane() main one}, which
+     * like the editor area in NetBeans never leaves - out of the area with its components, to be shown
+     * by the host some other way until {@link #restore restored}; where it went is remembered, so it
+     * comes back in its place. The pane keeps its components: it is not disposed of, and a docked pane
+     * that empties while minimized is disposed of as one in the area would be. A pane already
+     * minimized is left as it is.
+     *
+     * @throws IllegalArgumentException for the main pane, or for a pane that is neither in the area
+     *         nor a permanent pane of it
+     */
+    public void minimize(N pane) {
+        minimize(pane, null);
+    }
+
+    /**
+     * Minimizes {@code pane} (see {@link #minimize(Node)}) with an explicit {@code anchor} - where it
+     * goes back - or, with {@code null}, the place it is taken from. The pane may also be one that is
+     * not in the area: a hidden empty permanent pane, or a pane from the host that was never docked
+     * (a minimized pane of a persisted layout being restored), which the area adopts.
+     */
+    public void minimize(N pane, Anchor<N> anchor) {
+        Objects.requireNonNull(pane);
+        if (pane == mainPane()) {
+            throw new IllegalArgumentException("The main pane cannot be minimized");
+        }
+        if (anchor != null && anchor.leaf() == pane) {
+            throw new IllegalArgumentException("A pane cannot be anchored to itself");
+        }
+        if (minimized.contains(pane)) {
+            if (anchor != null) {
+                anchors.put(pane, anchor);
+            }
+            return;
+        }
+        if (contains(pane)) {
+            if (pane == root) {
+                throw new IllegalArgumentException("The only pane of the area cannot be minimized");
+            }
+            Anchor<N> current = anchorFor(pane);
+            detach(pane);
+            anchors.put(pane, anchor != null ? anchor : current);
+        } else if (isPrimary(pane)) {
+            if (anchor != null) {
+                anchors.put(pane, anchor);
+            }
+        } else {
+            // A pane of the host's that was never docked: adopt it as a docked pane.
+            if (anchor != null) {
+                anchors.put(pane, anchor);
+            }
+            watchEmptiness(pane);
+        }
+        minimized.add(pane);
+        LOG.fine(() -> "Minimized a pane" + (isPrimary(pane) ? " (" + roleOf(pane) + ")" : ""));
+    }
+
+    /**
+     * Puts the minimized {@code pane} back in the area at its {@linkplain #anchorOf anchor}, or along
+     * the side of the area its default shape has it on (the first permanent pane along the left, any
+     * other along the right, a docked pane along the side its anchor named). A pane anchored
+     * <em>into</em> another hands its components over to that pane and is disposed of. An empty
+     * permanent pane stays out, as an empty one does, until it receives a component. Does nothing
+     * for a pane that is not minimized.
+     */
+    public void restore(N pane) {
+        if (!minimized.remove(pane)) {
+            return;
+        }
+        if (isEmpty(pane)) {
+            if (!isPrimary(pane)) {
+                anchors.remove(pane);
+                dispose(pane);
+            }
+            return;
+        }
+        reattach(pane);
+        LOG.fine(() -> "Restored a minimized pane" + (isPrimary(pane) ? " (" + roleOf(pane) + ")" : ""));
+    }
+
+    /** Whether {@code pane} is currently {@linkplain #minimize minimized} out of the area. */
+    public boolean isMinimized(N pane) {
+        return minimized.contains(pane);
+    }
+
+    /** The minimized panes, in the order they were minimized; changes as panes are minimized and restored. */
+    public ObservableList<N> minimizedPanes() {
+        return minimizedView;
+    }
+
+    /**
+     * Where the minimized {@code pane} goes back when {@linkplain #restore restored}, or {@code null}
+     * for a pane that is not minimized or has nowhere in particular to go back to.
+     */
+    public Anchor<N> anchorOf(N pane) {
+        return minimized.contains(pane) ? anchors.get(pane) : null;
+    }
+
+    private void forgetMinimized(N pane) {
+        minimized.remove(pane);
+        anchors.remove(pane);
     }
 
     /**
@@ -763,20 +952,83 @@ public final class DockArea<N extends Node> extends StackPane {
     /**
      * Puts the hidden permanent pane {@code primary} back next to the leaf it left or, if that leaf is
      * gone, along the side of the area the default shape has it on (the first pane along the left,
-     * any other along the right), with the share the default shape gives it.
+     * any other along the right), with the share the default shape gives it. A minimized primary
+     * stays out: only {@link #restore} brings it back.
      */
     private void showPrimary(N primary) {
-        if (!isPrimaryHidden(primary)) {
+        if (!isPrimaryHidden(primary) || minimized.contains(primary)) {
             return;
         }
-        Anchor<N> anchor = primaryAnchors.remove(primary);
-        if (anchor != null && leaves().contains(anchor.leaf())) {
-            splitNode(anchor.leaf(), anchor.side(), primary, 1 - DEFAULT_SHARE);
-        } else {
-            double[] shares = DockTrees.sizesOf(defaultDividers);
-            boolean first = primary == primaries.firstEntry().getValue();
-            splitNode(root, first ? Side.LEFT : Side.RIGHT, primary, first ? shares[0] : shares[shares.length - 1]);
+        reattach(primary);
+    }
+
+    /**
+     * Puts {@code pane}, which is out of the area, back at its anchor (see {@link Anchor}, and
+     * {@link #resolveAnchor} for an anchor leaf that is out itself) - into the anchor leaf,
+     * disposing of the pane, when the anchor says so - or, without a usable anchor, along a side of
+     * the area: for a permanent pane the side and share its default shape gives it, for a docked
+     * pane the anchor's side (or the left) with the default share.
+     */
+    private void reattach(N pane) {
+        Anchor<N> anchor = resolveAnchor(pane, anchors.remove(pane));
+        if (anchor != null && !anchor.joins() && leaves().contains(anchor.leaf())) {
+            splitNode(anchor.leaf(), anchor.side(), pane, anchor.share());
+            return;
         }
+        if (anchor != null && anchor.joins() && !isPrimary(pane)
+                && (leaves().contains(anchor.leaf()) || isPrimary(anchor.leaf()))) {
+            // Into a pane of the area - or a hidden empty permanent pane, which the content brings back.
+            host.moveContent(pane, anchor.leaf());
+            dispose(pane);
+            return;
+        }
+        if (isPrimary(pane)) {
+            double[] shares = DockTrees.sizesOf(defaultDividers);
+            boolean first = pane == primaries.firstEntry().getValue();
+            splitNode(root, first ? Side.LEFT : Side.RIGHT, pane, first ? shares[0] : shares[shares.length - 1]);
+        } else {
+            Side side = anchor == null || anchor.side() == null ? Side.LEFT : anchor.side();
+            splitNode(root, side, pane, DEFAULT_SHARE);
+        }
+    }
+
+    /**
+     * {@code anchor} made usable when its leaf is out of the area itself. A leaf the pane goes next
+     * to that is minimized, or hidden, with an anchor of its own hands that anchor over: the pane
+     * takes the place the leaf would go back to, and the leaf is anchored back next to the pane, on
+     * the opposite side, with the rest of their joint space - so two panes that left one after the
+     * other (the navigator pane and the pane below it, say) come back in the arrangement they had,
+     * whichever returns first. A leaf the pane goes into is restored first, so the pane can join it.
+     */
+    private Anchor<N> resolveAnchor(N pane, Anchor<N> anchor) {
+        Set<N> visited = new HashSet<>();
+        visited.add(pane);
+        while (anchor != null && !leaves().contains(anchor.leaf()) && visited.add(anchor.leaf())) {
+            N leaf = anchor.leaf();
+            if (anchor.joins()) {
+                if (minimized.contains(leaf)) {
+                    restore(leaf);
+                }
+                return anchor;
+            }
+            Anchor<N> next = anchors.get(leaf);
+            if (next == null) {
+                return anchor;
+            }
+            anchors.put(leaf, new Anchor<>(pane, opposite(anchor.side()), 1 - anchor.share()));
+            LOG.fine("A returning pane took over the anchor of the pane it was anchored to");
+            anchor = next;
+        }
+        return anchor;
+    }
+
+    private static Side opposite(Side side) {
+        return switch (side) {
+            case LEFT -> Side.RIGHT;
+            case RIGHT -> Side.LEFT;
+            case TOP -> Side.BOTTOM;
+            case BOTTOM -> Side.TOP;
+        };
     }
 
     /** Removes {@code pane} from the area, collapsing its split if one child is left; false if it is not in a split. */

@@ -41,6 +41,7 @@ import org.openide.util.lookup.ServiceProvider;
  */
 @ServiceProvider(service = ViewProvider.class)
 @FxViewRegistration(id = OutputViewProvider.ID, displayName = "Output",
+        iconName = "com/gluonhq/netbeans/nbfx/output/output.png",
         location = FxViewLocation.CENTER_BOTTOM, position = 30)
 public final class OutputViewProvider implements ViewProvider {
 

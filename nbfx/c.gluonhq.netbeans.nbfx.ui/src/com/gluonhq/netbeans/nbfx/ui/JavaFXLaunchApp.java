@@ -20,6 +20,7 @@ import com.gluonhq.netbeans.nbfx.ui.shell.CaretStatusElement;
 import com.gluonhq.netbeans.nbfx.ui.shell.Docking;
 import com.gluonhq.netbeans.nbfx.ui.shell.LineSeparatorStatusElement;
 import com.gluonhq.netbeans.nbfx.ui.shell.NbfxTabPane;
+import com.gluonhq.netbeans.nbfx.ui.shell.SlidingArea;
 import com.gluonhq.netbeans.nbfx.ui.shell.ProgressStatusElement;
 import com.gluonhq.netbeans.nbfx.ui.shell.ProjectStatusElement;
 import com.gluonhq.netbeans.nbfx.ui.shell.ToolBarContainer;
@@ -110,8 +111,10 @@ public class JavaFXLaunchApp extends Application implements WindowSink {
     private final AppState appState = new AppState();
     private final SessionRestorer sessionRestorer = new SessionRestorer(appState, this::viewTabFor);
     private NbfxTabPane navigatorPane;
-    /** The left column: the navigator pane and the panes docked next to it. */
+    /** The dock area: the navigator pane, the editor pane and the panes docked next to them. */
     private DockArea<TabPane> dockArea;
+    /** The dock area with the sliding sides minimized panes go to; what the window shows. */
+    private SlidingArea slidingArea;
     private ActionBars actionBars;
     private FxStatusBar statusBar;
     private ProjectStatusElement projectElement;
@@ -176,11 +179,12 @@ public class JavaFXLaunchApp extends Application implements WindowSink {
         }
 
         dockArea = createDockArea();
+        slidingArea = Docking.slides();
         if (sessionRestorer.startupLayout().isEmpty()) {
             // First run: no layout to restore, so the default one also holds the default views.
             introduceDefaultViews();
         }
-        BorderPane borderPane = new BorderPane(dockArea);
+        BorderPane borderPane = new BorderPane(slidingArea);
 
         actionBars = new ActionBars();
         actionBars.registerProjectCommands(this::openProject,
@@ -245,7 +249,7 @@ public class JavaFXLaunchApp extends Application implements WindowSink {
                 // selected fires none, yet the user has just moved back to that project.
                 if (isNavigatorFocused(fo)) {
                     selectProjectOf(focusedNavigatorFile(fo));
-                } else if (isWithin(fo, dockArea) && activeDocument != null) {
+                } else if (isWithin(fo, slidingArea) && activeDocument != null) {
                     selectProjectOf(activeDocument.getValue());
                 }
             }
@@ -1000,7 +1004,8 @@ public class JavaFXLaunchApp extends Application implements WindowSink {
      * the menu or tool bars) leaves the styling as it was.
      */
     private void updateFocusScope(Node focusOwner) {
-        if (isWithin(focusOwner, dockArea)) {
+        // The sliding area holds the dock area and the panel a minimized tab slides in to.
+        if (isWithin(focusOwner, slidingArea)) {
             dockArea.markFocused(true, focusOwner);
             treeFocused.set(isNavigatorFocused(focusOwner));
             updateActiveView();
@@ -1013,6 +1018,7 @@ public class JavaFXLaunchApp extends Application implements WindowSink {
      * Editor tabs contribute no view, so the context falls back to the editor selection.
      */
     private void updateActiveView() {
+        // The focused pane may be the sliding panel's: its tab is then the active view.
         TabPane focused = NbfxTabPane.focusedPane();
         Tab selected = focused == null ? null : focused.getSelectionModel().getSelectedItem();
         viewSelection.setActiveView(NbfxTabPane.viewOf(selected));

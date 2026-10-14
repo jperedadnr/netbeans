@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -20,6 +21,7 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javafx.geometry.Orientation;
 import javafx.geometry.Rectangle2D;
+import javafx.geometry.Side;
 import javafx.stage.Screen;
 import org.openide.util.NbPreferences;
 
@@ -72,6 +74,10 @@ public final class AppState {
     private static final String FIELD_SEP = "\t";
     /** Field separator between the attributes of a single tab within a serialized pane field. */
     private static final String TAB_SEP = "\r";
+    /** Separates a pane's role from how it is minimized, within the first field of its line. */
+    private static final String MINIMIZED_SEP = "@";
+    /** Stands for an anchor <em>into</em> a leaf (no side) in a minimized pane's serialized form. */
+    private static final String ANCHOR_INTO = "INTO";
 
     private static final String[] EMPTY_LINES = new String[0];
 
@@ -566,17 +572,72 @@ public final class AppState {
 
     /**
      * A persisted pane: its {@link com.gluonhq.netbeans.nbfx.ui.shell.NbfxTabPane.PaneRole role},
-     * its bounds (only meaningful, and only valid, for a detached pane), its tabs in order and the
-     * index of the selected one ({@code -1} when the pane is empty).
+     * its bounds (only meaningful, and only valid, for a detached pane), its tabs in order, the
+     * index of the selected one ({@code -1} when the pane is empty) and, for a pane minimized to a
+     * sliding side of the main window, how it is {@linkplain Minimized minimized} ({@code null} for
+     * a pane that is showing or detached).
      * <p>
      * Tabs of both kinds may appear in any pane, since the user can drag them freely between panes.
      */
     public record PaneLayout(NbfxTabPane.PaneRole role, double x, double y, double width, double height,
-                      List<TabEntry> tabs, int activeIndex) {
+                      List<TabEntry> tabs, int activeIndex, Minimized minimized) {
+
+        /** A pane that is showing, or detached: not minimized. */
+        public PaneLayout(NbfxTabPane.PaneRole role, double x, double y, double width, double height,
+                          List<TabEntry> tabs, int activeIndex) {
+            this(role, x, y, width, height, tabs, activeIndex, null);
+        }
+
+        /**
+         * How a pane is minimized to a sliding side (see
+         * {@link com.gluonhq.netbeans.nbfx.ui.shell.SlidingArea}): the {@code side} it slides from,
+         * its slide-in {@code size} (a width for the left and right sides, a height for the bottom),
+         * and where it goes back when restored - next to the dock area's leaf at {@code anchorIndex}
+         * (its depth-first index in the layout's {@link Layout#dock() tree}) or next to the minimized
+         * pane at {@code anchorPane} (its index in the layout's {@link Layout#panes() panes}), one of
+         * the two being {@link #NO_ANCHOR} - on {@code anchorSide}, or into it when the side is
+         * {@code null}, with {@code anchorShare} of its space.
+         */
+        public record Minimized(Side side, double size, int anchorIndex, Side anchorSide, double anchorShare,
+                                int anchorPane) {
+
+            /** The anchor index of a pane that has nowhere in particular to go back to. */
+            public static final int NO_ANCHOR = -1;
+
+            public Minimized {
+                Objects.requireNonNull(side, "side");
+            }
+
+            /** A state anchored at a leaf of the tree, or nowhere. */
+            public Minimized(Side side, double size, int anchorIndex, Side anchorSide, double anchorShare) {
+                this(side, size, anchorIndex, anchorSide, anchorShare, NO_ANCHOR);
+            }
+
+            /** Whether the pane goes back at a leaf of the tree, or next to another minimized pane. */
+            public boolean hasAnchor() {
+                return anchorIndex >= 0 || anchorPane >= 0;
+            }
+
+            /** This state anchored at the leaf {@code index} and the minimized pane {@code pane} ({@link #NO_ANCHOR}: not). */
+            Minimized withAnchor(int index, int pane) {
+                boolean anchored = index >= 0 || pane >= 0;
+                return new Minimized(side, size, index, anchored ? anchorSide : null, anchorShare, pane);
+            }
+        }
 
         static PaneLayout docked(NbfxTabPane.PaneRole role, List<TabEntry> tabs, int activeIndex) {
             return new PaneLayout(role, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
                     tabs, activeIndex);
+        }
+
+        /** Whether the pane is minimized to a sliding side. */
+        public boolean isMinimized() {
+            return minimized != null;
+        }
+
+        /** This pane minimized as {@code state} says ({@code null} for showing). */
+        public PaneLayout withMinimized(Minimized state) {
+            return new PaneLayout(role, x, y, width, height, tabs, activeIndex, state);
         }
 
         /** This pane with its editor tabs removed, and {@code activeIndex} adjusted accordingly. */
@@ -592,16 +653,17 @@ public final class AppState {
                 }
             }
             return new PaneLayout(role, x, y, width, height, kept,
-                    active >= 0 ? active : (kept.isEmpty() ? -1 : 0));
+                    active >= 0 ? active : (kept.isEmpty() ? -1 : 0), minimized);
         }
     }
 
     /**
      * The full window layout: every pane - the dock area's in the depth-first order of its
-     * {@link DockTree}, then any permanent pane hidden for being empty, then the detached panes -
-     * the index into {@code panes} of the pane that held focus ({@code -1} when unknown), and the
-     * shape of the dock area ({@code null} when unknown, in which case the docked panes are stacked).
-     * The tree's leaves are matched to the docked panes by {@link #leafPanes(DockTree)}.
+     * {@link DockTree}, then any permanent pane hidden for being empty or minimized, then the
+     * minimized docked panes and the detached panes - the index into {@code panes} of the pane that
+     * held focus ({@code -1} when unknown), and the shape of the dock area ({@code null} when
+     * unknown, in which case the docked panes are stacked). The tree's leaves are matched to the
+     * docked panes by {@link #leafPanes(DockTree)}; a minimized pane is not in the tree.
      */
     public record Layout(List<PaneLayout> panes, int focusedIndex, DockTree dock) {
 
@@ -619,9 +681,11 @@ public final class AppState {
             this(panes, -1);
         }
 
-        /** The panes of the dock area (not detached), in the order they were persisted. */
+        /** The panes of the dock area (neither detached nor minimized), in the order they were persisted. */
         public List<PaneLayout> dockedPanes() {
-            return panes.stream().filter(pane -> pane.role() != NbfxTabPane.PaneRole.DETACHED).toList();
+            return panes.stream()
+                    .filter(pane -> pane.role() != NbfxTabPane.PaneRole.DETACHED && !pane.isMinimized())
+                    .toList();
         }
 
         /**
@@ -661,8 +725,8 @@ public final class AppState {
 
         /**
          * This layout reduced to what can be applied before any project has loaded: editor tabs
-         * (whose files belong to the projects being reopened) are dropped, and detached or bottom
-         * panes left without any tab are dropped with them.
+         * (whose files belong to the projects being reopened) are dropped, and detached, bottom or
+         * minimized panes left without any tab are dropped with them.
          */
         Layout withoutEditors() {
             List<PaneLayout> kept = new ArrayList<>();
@@ -680,11 +744,40 @@ public final class AppState {
                 }
                 kept.add(stripped);
             }
-            // A dropped docked pane leaves the area's tree as well.
+            // A dropped docked pane leaves the area's tree as well, and the leaves after it move up,
+            // as do the panes of the list: the anchors of the minimized panes follow, or are forgotten
+            // with a dropped leaf or pane.
             DockTree pruned = null;
             List<PaneLayout> leafPanes = dock == null ? null : leafPanes(dock);
             if (leafPanes != null) {
                 pruned = dock.retainLeaves(i -> !dropped.contains(leafPanes.get(i)));
+            }
+            for (int i = 0; i < kept.size(); i++) {
+                PaneLayout pane = kept.get(i);
+                if (!pane.isMinimized() || !pane.minimized().hasAnchor()) {
+                    continue;
+                }
+                int leaf = pane.minimized().anchorIndex();
+                int remappedLeaf = PaneLayout.Minimized.NO_ANCHOR;
+                if (leaf >= 0 && leafPanes != null && leaf < leafPanes.size() && !dropped.contains(leafPanes.get(leaf))) {
+                    remappedLeaf = 0;
+                    for (int j = 0; j < leaf; j++) {
+                        if (!dropped.contains(leafPanes.get(j))) {
+                            remappedLeaf++;
+                        }
+                    }
+                }
+                int anchorPane = pane.minimized().anchorPane();
+                int remappedPane = PaneLayout.Minimized.NO_ANCHOR;
+                if (anchorPane >= 0 && anchorPane < panes.size() && !dropped.contains(panes.get(anchorPane))) {
+                    remappedPane = 0;
+                    for (int j = 0; j < anchorPane; j++) {
+                        if (!dropped.contains(panes.get(j))) {
+                            remappedPane++;
+                        }
+                    }
+                }
+                kept.set(i, pane.withMinimized(pane.minimized().withAnchor(remappedLeaf, remappedPane)));
             }
             return new Layout(kept, focused, pruned);
         }
@@ -787,9 +880,23 @@ public final class AppState {
         }
     }
 
-    private static String serialize(PaneLayout pane) {
-        StringBuilder sb = new StringBuilder(pane.role().name())
-                .append(FIELD_SEP).append(pane.x())
+    /**
+     * One line per pane: the role - followed, for a minimized pane, by
+     * {@code @side@size@anchorLeaf@anchorSide@share@anchorPane} - then the bounds, the active index
+     * and the tabs, tab-separated.
+     */
+    static String serialize(PaneLayout pane) {
+        StringBuilder sb = new StringBuilder(pane.role().name());
+        PaneLayout.Minimized minimized = pane.minimized();
+        if (minimized != null) {
+            sb.append(MINIMIZED_SEP).append(minimized.side().name())
+                    .append(MINIMIZED_SEP).append(minimized.size())
+                    .append(MINIMIZED_SEP).append(minimized.anchorIndex())
+                    .append(MINIMIZED_SEP).append(minimized.anchorSide() == null ? ANCHOR_INTO : minimized.anchorSide().name())
+                    .append(MINIMIZED_SEP).append(minimized.anchorShare())
+                    .append(MINIMIZED_SEP).append(minimized.anchorPane());
+        }
+        sb.append(FIELD_SEP).append(pane.x())
                 .append(FIELD_SEP).append(pane.y())
                 .append(FIELD_SEP).append(pane.width())
                 .append(FIELD_SEP).append(pane.height())
@@ -811,7 +918,7 @@ public final class AppState {
     }
 
     /** Parses one serialized pane line, returning {@code null} if it is malformed or unknown. */
-    private static PaneLayout parsePane(String line) {
+    static PaneLayout parsePane(String line) {
         if (line.isBlank()) {
             return null;
         }
@@ -819,10 +926,12 @@ public final class AppState {
         if (f.length < 6) {
             return null;
         }
-        NbfxTabPane.PaneRole role = parseEnum(NbfxTabPane.PaneRole.class, f[0]);
+        String[] head = f[0].split(MINIMIZED_SEP, -1);
+        NbfxTabPane.PaneRole role = parseEnum(NbfxTabPane.PaneRole.class, head[0]);
         if (role == null) {
             return null;
         }
+        PaneLayout.Minimized minimized = parseMinimized(role, head);
         List<TabEntry> tabs = new ArrayList<>();
         for (int i = 6; i < f.length; i++) {
             TabEntry tab = parseTab(f[i]);
@@ -837,7 +946,34 @@ public final class AppState {
             return null;
         }
         return new PaneLayout(role, parseDouble(f, 1), parseDouble(f, 2),
-                parseDouble(f, 3), parseDouble(f, 4), tabs, active);
+                parseDouble(f, 3), parseDouble(f, 4), tabs, active, minimized);
+    }
+
+    /**
+     * The minimized state in the first field of a pane line
+     * ({@code ROLE@side@size@anchorLeaf@anchorSide@share@anchorPane}, the anchor fields being
+     * optional), or {@code null} for a pane that is not minimized - the editor and detached panes
+     * never are.
+     */
+    private static PaneLayout.Minimized parseMinimized(NbfxTabPane.PaneRole role, String[] head) {
+        if (head.length < 3 || role == NbfxTabPane.PaneRole.MAIN || role == NbfxTabPane.PaneRole.DETACHED) {
+            return null;
+        }
+        Side side = parseEnum(Side.class, head[1]);
+        if (side == null) {
+            return null;
+        }
+        int leaf = head.length > 3 ? parseInt(head, 3) : PaneLayout.Minimized.NO_ANCHOR;
+        int pane = head.length > 6 ? parseInt(head, 6) : PaneLayout.Minimized.NO_ANCHOR;
+        boolean into = head.length > 4 && ANCHOR_INTO.equals(head[4].trim());
+        Side anchorSide = head.length > 4 && !into ? parseEnum(Side.class, head[4]) : null;
+        if (anchorSide == null && !into) {
+            leaf = PaneLayout.Minimized.NO_ANCHOR;
+            pane = PaneLayout.Minimized.NO_ANCHOR;
+        }
+        boolean anchored = leaf >= 0 || pane >= 0;
+        return new PaneLayout.Minimized(side, parseDouble(head, 2), Math.max(leaf, -1),
+                anchored ? anchorSide : null, parseDouble(head, 5), Math.max(pane, -1));
     }
 
     /** Parses one serialized tab field, returning {@code null} if it is malformed or unknown. */

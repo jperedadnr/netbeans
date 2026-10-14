@@ -40,6 +40,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -62,6 +63,7 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.openide.filesystems.FileObject;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 
 /**
  * A {@link TabPane} control with cross-window drag and drop, holding tabs whose content is either a
@@ -73,7 +75,10 @@ import org.openide.util.Lookup;
  *     <li>tabs dropped near an edge of a docked pane (or of its whole column) split it, docking a new
  *     pane on that side (see {@link DockArea}),</li>
  *     <li>selecting a tab moves keyboard focus onto its content (editor caret or tree),</li>
- *     <li>selecting an editor tab tracks it as the shared active document.</li>
+ *     <li>selecting an editor tab tracks it as the shared active document,</li>
+ *     <li>a pane docked in the main window next to the editor pane carries a <em>Minimize Window
+ *     Group</em> button in its header, which minimizes it to the window's sliding sides (see
+ *     {@link SlidingArea}).</li>
  * </ul>
  * <p>Visual feedback is provided by {@link TabDropIndicator} (drop target bounds highlighted with a placeholder tab)
  * and {@link TabDragOverlays} (per-screen near-transparent stages catching drops outside the current window).
@@ -97,7 +102,12 @@ public final class NbfxTabPane extends TabPane {
         /** A pane docked in the main window next to the permanent panes; exists only while it holds a tab. */
         DOCKED,
         /** A pane living in its own detached window; any number may exist. */
-        DETACHED;
+        DETACHED,
+        /**
+         * The pane a tab of a minimized pane slides in to (see {@link SlidingArea}); exactly one
+         * exists, holding the slid-in tab on loan from its group, and it is never persisted.
+         */
+        SLIDE;
 
         /** Whether a pane with this role exists for the whole session, even empty. */
         public boolean isPermanent() {
@@ -127,6 +137,11 @@ public final class NbfxTabPane extends TabPane {
     private static final String TAB_PANE_CLASS = "nbfx-tab-pane";
     private static final String TAB_HEADER_CLASS = "nbfx-tab-header";
     private static final PseudoClass DOCK_FOCUSED = PseudoClass.getPseudoClass("dock-focused");
+    /** Set on a pane whose header carries a control button (minimize, dock): the header makes room for it. */
+    private static final PseudoClass HEADER_CONTROL = PseudoClass.getPseudoClass("header-control");
+    private static final double HEADER_BUTTON_SIZE = 20;
+    /** The height of the tab header the stylesheet fixes, which the minimize button is centred in. */
+    private static final double TAB_HEADER_HEIGHT = 28;
 
     private static final double DETACHED_WIDTH = 900;
     private static final double DETACHED_HEIGHT = 650;
@@ -169,6 +184,12 @@ public final class NbfxTabPane extends TabPane {
     }
 
     private final PaneRole role;
+    /**
+     * The control button at the right end of the header: Minimize Window Group, shown while the pane
+     * is in the dock area next to the editor pane, or Dock on the sliding panel's pane. It is a child
+     * of the control laid out here, over the header, as the skin knows nothing of it.
+     */
+    private final Button headerButton;
 
     /** The pane that last held focus, so the persisted layout can restore the active pane and window. */
     private static TabPane lastFocusedPane;
@@ -186,7 +207,11 @@ public final class NbfxTabPane extends TabPane {
         attachStylesheetWhenAttached(this);
         trackFocus(this);
         TAB_PANES.add(this);
-        addTabPaneDragHandlers(this);
+        if (role != PaneRole.SLIDE) {
+            // Nothing is dropped on the sliding panel: a tab or file landing there would be lost
+            // with the panel. Its own tab is still dragged out through its header.
+            addTabPaneDragHandlers(this);
+        }
         wireEditorContext(this);
         // Record modifier keys on every press so a close-button click (which fires onCloseRequest
         // right after) can tell a plain click from Shift+click / Alt+click.
@@ -194,6 +219,74 @@ public final class NbfxTabPane extends TabPane {
             lastPressShift = e.isShiftDown();
             lastPressAlt = e.isAltDown();
         });
+        if (role == PaneRole.SLIDE) {
+            headerButton = SlidingArea.iconButton("restore",
+                    NbBundle.getMessage(NbfxTabPane.class, "SlidePanel.dock.tooltip"));
+            headerButton.setOnAction(e -> {
+                SlidingArea slides = Docking.slides();
+                if (slides != null) {
+                    slides.dock(getSelectionModel().getSelectedItem());
+                }
+            });
+        } else {
+            headerButton = SlidingArea.iconButton("minimize",
+                    NbBundle.getMessage(NbfxTabPane.class, "Tab.minimizeGroup.tooltip"));
+            headerButton.setOnAction(e -> {
+                SlidingArea slides = Docking.slides();
+                if (slides != null) {
+                    slides.minimize(this);
+                }
+            });
+        }
+        headerButton.getStyleClass().add("nbfx-header-button");
+        headerButton.setManaged(false);
+        headerButton.setVisible(false);
+        getChildren().add(headerButton);
+        // The skin adds its nodes after this one; the button must stay above the header they draw.
+        skinProperty().subscribe(skin -> {
+            if (skin != null) {
+                headerButton.toFront();
+            }
+        });
+        // Whether the pane sits in the area changes with its parent: docked into a split, taken out
+        // of it (minimized, detached, disposed), or made the area's only pane.
+        parentProperty().subscribe(parent -> updateHeaderButton());
+        // The permanent panes join the area's split before the area is published: check again
+        // once the pane is in a scene.
+        sceneProperty().subscribe(scene -> updateHeaderButton());
+    }
+
+    /**
+     * Shows the header button: always on the sliding panel's pane (Dock); on any other pane while it
+     * is in the dock area and is not the editor pane (Minimize Window Group).
+     */
+    private void updateHeaderButton() {
+        DockArea<TabPane> area = Docking.area();
+        boolean shown = role == PaneRole.SLIDE
+                || (area != null && area.contains(this) && this != area.mainPane());
+        pseudoClassStateChanged(HEADER_CONTROL, shown);
+        headerButton.setVisible(shown);
+    }
+
+    @Override
+    protected void layoutChildren() {
+        super.layoutChildren();
+        if (headerButton.isVisible()) {
+            double x = getWidth() - snappedRightInset() - HEADER_BUTTON_SIZE - 4;
+            double y = snappedTopInset() + (TAB_HEADER_HEIGHT - HEADER_BUTTON_SIZE) / 2;
+            headerButton.resizeRelocate(snapPositionX(x), snapPositionY(y), HEADER_BUTTON_SIZE, HEADER_BUTTON_SIZE);
+        }
+    }
+
+    /** Whether a tab header is being dragged right now (between drag-detected and drag-done). */
+    static boolean isTabDragInProgress() {
+        return tabDragInProgress;
+    }
+
+    /** Whether {@code pane} is minimized to a sliding side of the main window. */
+    static boolean isMinimized(TabPane pane) {
+        SlidingArea slides = Docking.slides();
+        return slides != null && slides.isMinimized(pane);
     }
 
     /** Returns an optional with the {@code tab} that holds the {@code fileObject}, or empty if not found. */
@@ -244,7 +337,10 @@ public final class NbfxTabPane extends TabPane {
         if (active != null) {
             Optional<Tab> tab = findTab(active);
             TabPane pane = tab.map(Tab::getTabPane).orElse(null);
-            if (pane != null && TAB_PANES.contains(pane) && (!dockedOnly || roleOf(pane) != PaneRole.DETACHED)) {
+            // A minimized pane, or the panel its tab slides in to, is no place to open files in: as
+            // in NetBeans, they go to the editor area.
+            if (pane != null && TAB_PANES.contains(pane) && !isMinimized(pane) && roleOf(pane) != PaneRole.SLIDE
+                    && (!dockedOnly || roleOf(pane) != PaneRole.DETACHED)) {
                 return pane;
             }
         }
@@ -263,7 +359,7 @@ public final class NbfxTabPane extends TabPane {
      * Selects the given {@code tab}, moves its window to the front and focuses its content. The
      * focus is requested explicitly: when the tab is already the selected one of its pane (a file
      * reopened from the navigator while it shows in another pane), selecting it fires no selection
-     * change, so nothing else would move the caret there.
+     * change, so nothing else would move the caret there. A tab of a minimized pane slides in.
      */
     public static void selectTabAndMoveToFront(Tab tab) {
         Platform.runLater(() -> {
@@ -473,6 +569,25 @@ public final class NbfxTabPane extends TabPane {
     }
 
     private static void wireEditorContext(TabPane tabPane) {
+        // The sliding panel's pane does not activate or focus what it shows on selection: a tab
+        // hovered in from a sliding side is only looked at, and is activated by being clicked in
+        // (the focus tracking below). Its tabs are still unregistered when closed.
+        if (roleOf(tabPane) != PaneRole.SLIDE) {
+            wireSelectionAndFocus(tabPane);
+        }
+        // Unregister documents whose tab has been closed (removed from every pane).
+        tabPane.getTabs().addListener((ListChangeListener<Tab>) change -> {
+            while (change.next()) {
+                if (change.wasRemoved()) {
+                    List<Tab> removed = List.copyOf(change.getRemoved());
+                    // Defer: a move/reorder removes then re-adds the tab within the same pulse.
+                    Platform.runLater(() -> removed.forEach(NbfxTabPane::unregisterIfClosed));
+                }
+            }
+        });
+    }
+
+    private static void wireSelectionAndFocus(TabPane tabPane) {
         // Track the active document: whenever an editor tab becomes selected in any pane, it is active.
         // Selecting a navigator (non-editor) tab keeps the last editor active; an empty pane clears it.
         tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, selectedTab) -> {
@@ -503,16 +618,6 @@ public final class NbfxTabPane extends TabPane {
                         }
                     }
                 });
-        // Unregister documents whose tab has been closed (removed from every pane).
-        tabPane.getTabs().addListener((ListChangeListener<Tab>) change -> {
-            while (change.next()) {
-                if (change.wasRemoved()) {
-                    List<Tab> removed = List.copyOf(change.getRemoved());
-                    // Defer: a move/reorder removes then re-adds the tab within the same pulse.
-                    Platform.runLater(() -> removed.forEach(NbfxTabPane::unregisterIfClosed));
-                }
-            }
-        });
     }
 
     static void setActiveDocument(EditorDocument document) {
@@ -777,6 +882,12 @@ public final class NbfxTabPane extends TabPane {
     }
 
     private static void selectTabAndMoveToFront(TabPane tabPane, Tab tab) {
+        SlidingArea slides = Docking.slides();
+        if (slides != null && (slides.isMinimized(Objects.requireNonNull(tabPane)) || slides.isSlid(tab))) {
+            // The pane is not showing: the tab slides in from its side instead (or stays slid in).
+            slides.slideIn(Objects.requireNonNull(tab));
+            return;
+        }
         Objects.requireNonNull(tabPane).getSelectionModel().select(Objects.requireNonNull(tab));
         if (tabPane.getScene() != null && tabPane.getScene().getWindow() instanceof Stage stage) {
             stage.toFront();
@@ -1037,10 +1148,11 @@ public final class NbfxTabPane extends TabPane {
 
     /**
      * Every pane in layout order: the dock area's panes in the depth-first order of its
-     * {@link DockArea#leaves()}, then any permanent pane hidden for being empty, then the detached
-     * panes in creation order. Layout persistence relies on this order, since docked panes have no
-     * identity beyond their position in the area's {@link com.gluonhq.netbeans.nbfx.docking.DockTree} and detached windows none beyond
-     * their position in the list.
+     * {@link DockArea#leaves()}, then any permanent pane hidden for being empty or minimized, then
+     * the minimized docked panes and the detached panes in creation order. Layout persistence relies
+     * on this order, since docked panes have no identity beyond their position in the area's
+     * {@link com.gluonhq.netbeans.nbfx.docking.DockTree} and detached windows none beyond their
+     * position in the list.
      */
     public static List<TabPane> panesByRole() {
         List<TabPane> panes = new ArrayList<>();

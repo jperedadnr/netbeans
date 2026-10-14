@@ -28,7 +28,7 @@ services and substituting every view/component with a JavaFX equivalent.
 | SPI maturity | **"Under development" until MVP**, then freeze |
 | Docs/versioning | Follow **NetBeans conventions** (`apichanges.xml`, `arch.xml`, spec versions, sigtest) |
 | Action context | **View-tied `FxActionContext`** in the global Lookup; commands bind enablement to it (§17) |
-| Window modes | **nbfx `FxArea` descriptor** mirroring the Swing modes/layout; sliding deferred (§18) |
+| Window modes | **nbfx `FxArea` descriptor** mirroring the Swing modes/layout; sliding sides done (§24) |
 
 ### MVP definition of done
 
@@ -476,7 +476,9 @@ Workstream:
   windows track the selection; `Window ▸ IDE Tools ▸ Properties` works; guardrail green.
 
 ### Deferred / backlog
-- Sliding/auto-hide window sides (FX has no native sliding) — separate item.
+- ~~Sliding/auto-hide window sides (FX has no native sliding)~~ — **done (§24)**: custom sliding
+  sides on the dock area; left to do there: dragging slide buttons, a context menu on them,
+  Maximize.
 - General `FxNode` abstraction — only if a surface needs it.
 
 ---
@@ -861,7 +863,10 @@ declared default weights (only `DEFAULT_NAVIGATOR_SHARE = 0.22`).
   `NbFx/ContextMenus/Editor/Navigate`); the menu and view processors write `displayName` as a
   `bundlevalue` so `#key` references resolve; `EditorContextMenu` recurses with
   `ActionLayerReader.readSubmenus` (display-only accelerators, as the menu is shown directly).
-- **Deferred:** sliding/auto-hide sides (FX has no native sliding; needs custom auto-hide UI).
+- **Done (§24):** sliding/auto-hide sides — a custom auto-hide UI over the dock area, since FX has
+  no native sliding: `DockArea.minimize/restore` is the model (the four `*SlidingSide` modes
+  collapse into "a pane out of the area, with the side it went to"), `SlidingArea`/`SlideBar` in
+  `nbfx.ui` the bars and the slide-in panel.
 
 ---
 
@@ -929,7 +934,7 @@ root from the selected project/file/document.
 7. Migrate remaining command groups to `FxActionContext`; enablement + provider-resolution +
    panel-activation tests; purity green.
 
-**Deferred:** sliding/auto-hide sides.
+**Done (§24):** sliding/auto-hide sides.
 
 8. Naming & layer parity (§21.1): window **Structure → Navigator** (`Window ▸ Navigator`,
    `SELECT_NAVIGATOR`), **Debug → Debugging**, **Git → Versioning**; `NbFx/Navigators/<mime>`,
@@ -940,6 +945,10 @@ root from the selected project/file/document.
 
 ### 20.1 Status (updated this round)
 
+- **Sliding sides (done, §24):** every pane docked next to the editor pane carries *Minimize
+  Window Group*; minimized groups live in bars along the window's left/right/bottom edge, their tabs
+  slide in on hover or click, *Dock* returns one tab, *Restore Window Group* the pane; the state
+  persists with the layout. `DockArea` gained `minimize`/`restore`/`minimizedPanes()`/`Anchor`.
 - **Done:** milestones 1–6. `nbfx.context`, `nbfx.project.actions`, `nbfx.propertysheet` (renamed),
   `nbfx.structure`, `nbfx.structure.java` all created/updated and in `nb.cluster.nbfx`; submenu support
   and `Window ▸ IDE Tools` added; Git follows `FxActionContext`; the Java members panel
@@ -1349,6 +1358,107 @@ The Java Navigator mapping:
 
 ---
 
+## 24. Sliding sides (minimized window groups)
+
+The NetBeans auto-hide behaviour (`core.windows` `view/ui/slides`: `SlideBar`, the
+`*SlidingSide` modes, `TabbedSlideAdapter`'s minimize/pin buttons) rebuilt on the nbfx dock area.
+What the user sees matches the Swing IDE: a *Minimize Window Group* button at the right end of the
+tab header of every pane docked next to the editor pane (never the editor pane itself; a view dragged
+into it loses the button, an editor group dragged next to it gains one); clicking it collapses the
+pane to a group of buttons - *Restore Window Group*, then one button per tab with its icon and its
+title written along the bar - in a bar along the edge the pane was nearest to (left, right or bottom,
+judged against the editor pane exactly as `DefaultView.guessSlideSide` does, plus the top for a pane
+above the editors, a side NetBeans does not slide to); hovering a button
+slides the tab's content in over the area after 200 ms and out 400 ms after the mouse leaves;
+clicking it slides the tab in to stay, with the focus, until the focus leaves it, the mouse is
+pressed elsewhere or Escape; the slid-in panel's header offers *Dock* (that one tab back, the
+rest of the group staying minimized) and *Close*, and its inner edge drags to resize.
+
+- **Model: `nbfx.docking`.** `DockArea.minimize(pane)` takes any pane but the main one out of the
+  tree with its components, remembering an `Anchor` (the neighbouring leaf, the side, and the share
+  of their joint space it had - the same anchor an emptied permanent pane now records, so it also
+  comes back at its former size); `restore(pane)` puts it back there, or along the area's edge when
+  the leaf is gone; `minimizedPanes()` is an observable list the host follows; `anchorOf` tells where
+  a pane goes back. An `Anchor.into(leaf)` makes a single component minimized out of a pane rejoin
+  it. An anchor to a leaf that is out itself (Projects/Files and the Navigator below it both
+  minimized, in either order) is handed over on restore: the returning pane takes the place its
+  anchor leaf would go back to and that leaf is re-anchored next to it on the opposite side with the
+  rest of their joint space, so the two come back as they were whichever returns first; a pane
+  anchored *into* a minimized pane restores that pane and joins it (the NetBeans "previous mode"
+  constraints, without a mode tree). A minimized primary stays out when it receives content (only `restore` brings it back, so a
+  view opened into a minimized Projects group joins the group); an emptied minimized docked pane is
+  disposed of; `applyTree` restores everything first (Reset Windows). `paneBelow` of a minimized
+  primary is `null`, and `Docking.paneAt(LEFT_BOTTOM)` falls back to the (minimized) navigator pane.
+  `build` now applies the shape's dividers, so the tree read back is the one built (the constructor
+  used to leave the split pane's 0.5 default in place of `FxArea.EXPLORER`'s 0.3).
+- **View: `nbfx.ui` `SlidingArea` + `SlideBar`.** `SlidingArea` wraps the area (it is what the main
+  window's `BorderPane` shows; `Docking.slides()`): a `BorderPane` with the three bars around the
+  area, and the slide-in panel as an unmanaged child positioned by `layoutChildren` from the bars'
+  preferred sizes and the pane's slide-in size (its width/height when minimized, resizable, kept per
+  pane). The panel is an `NbfxTabPane` of its own - the `PaneRole.SLIDE` pane, never persisted -
+  that borrows the *tab itself* while it shows (as NetBeans shows the slid TC in a tabbed
+  container): the tab keeps its header, its close button and its header drag, so it can be dragged
+  to another pane, a split zone or out to a new window, and the pane's header control is *Dock*. On
+  slide-out the tab goes back to its group at its place; if it left on its own (closed, dragged,
+  docked) the panel just hides and the group is refreshed. While on loan the tab still belongs to
+  its group - `SlidingArea.tabsOf`/`selectedOf` list it, the slide bar shows it, persistence
+  captures it there - and `Docking.isEmpty` (the host's emptiness for the area) counts the lending
+  pane as not empty, so the area does not dispose of a one-tab group meanwhile. The slide pane takes
+  no drops (a tab or file landing there would vanish with the panel) and does not activate/focus on
+  selection (a hovered-in tab is only looked at; clicking into it focuses and activates as any
+  pane, so `NbfxTabPane.focusedPane()` naturally reports it and the global context follows).
+  `NbfxTabPane` owns the header button (a child of the control laid out over the skin's header; the
+  `header-control` pseudo-class makes the header leave room for it; state recomputed on parent/scene
+  changes) and reveals a tab of a minimized pane by sliding it in (`selectTabAndMoveToFront`, so
+  Window ▸ Projects, Open File and friends work on a minimized group); `editorHome` never opens new
+  files into a minimized pane or the slide pane. The tab context menus and *Window ▸ Configure
+  Window* got working *Minimize* (one tab, anchored into its pane) and *Minimize Group* items,
+  enabled for minimizable panes only, and *Dock* works on a slid-in tab. `JavaFXLaunchApp` treats
+  the sliding area as the focus scope. *Dock* sends a tab back to where its group came from, as
+  NetBeans docks a window back to its previous mode, so tabs docked one by one rejoin
+  (`SlidingArea.dock`/`dockOutOf`): a group anchored *into* a pane of the area joins it; otherwise
+  the first dock out of a group (a minimized permanent pane such as Projects/Files, or a docked one)
+  restores the group's own pane at its anchor holding that tab, and leaves the other tabs minimized
+  in a docked pane anchored into it (the one already anchored there, or a new one on the same side
+  with the same slide-in size); when the pane a group came from is itself minimized, that pane comes
+  back with the tab and the rest of both groups stay minimized; later docks and Restore Window
+  Group join that pane. The tab icons: `ViewTabs` draws a view's registered `iconName` on its
+  header, and the slide buttons copy the header's icon, so Projects and Files were given the icons
+  their Window-menu items use (`projectTab.png`/`filesTab.png`, now resources of
+  `nbfx.project.ui.java` beside their views), and Output its own (`output.png` on the view,
+  `output-16.png` on `SelectOutputCommand.getIcon()` for *Window ▸ Output*, both in `nbfx.output`,
+  the pattern `SelectNavigatorCommand` set) - unlike NetBeans, which hides the icon on a view tab
+  until it slides in or is dragged elsewhere, a tab keeps its icon wherever it shows.
+- **Persistence.** `AppState.PaneLayout` gained `Minimized(side, size, anchorIndex, anchorSide,
+  anchorShare, anchorPane)`, serialized into the role field (`DOCKED@LEFT@250.0@1@BOTTOM@0.35@-1`;
+  `INTO` for an anchor into a leaf; `anchorPane` indexes the layout's panes when the anchor is
+  another minimized pane, set in a second pass of `applyLayout` once every minimized pane exists;
+  old lines read as showing panes; the editor and detached panes never read as minimized). `Layout.dockedPanes()` excludes minimized panes (they are not tree leaves);
+  `withoutEditors` remaps the anchor indexes to the pruned tree. `SessionRestorer` captures the
+  state from `SlidingArea`/`DockArea.anchorOf` (anchor = index of the leaf among the persisted
+  leaves) and, on restore, minimizes the permanent pane or a new docked pane again - anchored only
+  when the area took the recorded shape - before moving the tabs in.
+- **Styling:** `styles.css` (`.nbfx-icon-button`/`.nbfx-glyph` shapes for minimize, restore and
+  close; `.nbfx-slide-bar`, `.nbfx-slide-button`, `.nbfx-slide-panel`), kept to the tab-header
+  palette; proper theming later, as with the Navigator.
+- **Deferred:** dragging the slide *buttons* themselves (the slid-in tab's header already drags)
+  and dropping tabs on a bar; a context menu on the slide buttons; Maximize; the slide-in
+  animation is a short fade rather than a slide.
+- **Verification:** `nbfx.docking` got a headless unit-test setup (same `glass.platform=Headless`
+  properties as `nbfx.api`) and `DockAreaTest` (10: leave/return with share, docked pane below the
+  navigator, disposal when emptied, anchor into a pane, minimized primary ignoring content, empty
+  primary staying hidden after restore, `applyTree`, main pane refused, the four minimize/restore
+  orders of the navigator pane and the pane below it, a pane anchored into a minimized pane);
+  `AppStateLayoutTest` (7: round trips with leaf, into and minimized-pane anchors, legacy line,
+  editor/detached never minimized, anchor remapping of leaves and panes). `nbfx.ui` (12),
+  `nbfx.docking` (10) green; `check-purity` 0 violations; docking, ui, launcher and
+  `project.ui.java` build. Checked by hand in `ant tryme`: minimizing/restoring the left groups,
+  docking tabs one by one back into one pane, the slid-in tab's header dragging to other panes and
+  windows, the four sides; persistence across a restart with both left groups minimized still to
+  be confirmed.
+
+---
+
 ## Appendix: Key reference locations
 
 - Layer processors: `platform/openide.filesystems/src/org/openide/filesystems/annotations/`
@@ -1373,6 +1483,13 @@ The Java Navigator mapping:
 - Swing structure Navigator: `ide/spi.navigator/src/org/netbeans/modules/navigator/`
   (`NavigatorTC.java`, `NavigatorController.java`, `ProviderRegistry.java`) and
   `org/netbeans/spi/navigator/NavigatorPanel.java`.
+- Swing sliding sides (§24 reference): `platform/core.windows/src/org/netbeans/core/windows/view/ui/slides/`
+  (`SlideBar.java`, `SlideGestureRecognizer.java` - the 200/400 ms timers, `SlideBarContainer.java`),
+  `platform/core.windows/src/org/netbeans/core/windows/view/DefaultView.java:89` (`guessSlideSide`),
+  `platform/o.n.swing.tabcontrol/src/org/netbeans/swing/tabcontrol/plaf/AquaViewTabDisplayerUI.java:249-273`
+  (minimize / pin / restore-group buttons), `.../plaf/Bundle.properties` (`Tip_Minimize_Window_Group`,
+  `Tip_Restore_Window_Group`, `Tip_Pin`); nbfx: `nbfx/c.gluonhq.netbeans.nbfx.docking/src/.../DockArea.java`
+  (`minimize`/`restore`/`Anchor`), `nbfx/c.gluonhq.netbeans.nbfx.ui/src/.../shell/{SlidingArea,SlideBar}.java`.
 - Swing Java navigator (§23 reference): `java/java.navigation/src/org/netbeans/modules/java/navigation/`
   (`ClassMemberPanel.java`, `ClassMemberPanelUI.java`, `actions/`), `java/beans/src/org/netbeans/modules/beans/BeanPanel.java`;
   nbfx port: `nbfx/c.gluonhq.netbeans.nbfx.structure.java/src/.../structure/java/{ui,model,actions}/`.

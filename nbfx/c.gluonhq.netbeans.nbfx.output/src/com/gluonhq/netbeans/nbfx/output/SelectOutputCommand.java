@@ -20,14 +20,27 @@ package com.gluonhq.netbeans.nbfx.output;
 
 import com.gluonhq.netbeans.nbfx.api.actions.AbstractCommand;
 import com.gluonhq.netbeans.nbfx.api.actions.ActionIds;
+import java.util.Objects;
+import javafx.scene.Node;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import org.openide.util.NbBundle;
 
 /** Window ▸ Output: opens or fronts the Output view. Always enabled. */
 final class SelectOutputCommand extends AbstractCommand {
 
+    /** The menu-size icon; the view's tab draws the one its registration names. */
+    private static final Image ICON = new Image(Objects.requireNonNull(
+            SelectOutputCommand.class.getResource("output-16.png")).toExternalForm());
+
     SelectOutputCommand() {
         super(ActionIds.SELECT_OUTPUT,
                 NbBundle.getMessage(SelectOutputCommand.class, "CTL_SelectOutputCommand"), null, false);
+    }
+
+    @Override
+    public Node getIcon() {
+        return new ImageView(ICON);
     }
 
     @Override
