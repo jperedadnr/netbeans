@@ -1152,6 +1152,20 @@ root from the selected project/file/document.
   follows the active component's lookup) — see §22.7. It was the prerequisite for reworking the
   Structure/members reactivity and for the §21.1 de-SPI; also the substrate for future view
   sub-views (code/history/preview).
+- **Start-up deadlock with a Swing warm-up (fixed).** `ant tryme` sometimes froze while the modules
+  loaded. The thread dump showed a class-initialization deadlock: `core.ui`'s
+  `ContextMenuWarmUpTask` (an `@OnShowing` runnable, `Modules/UIReady`) ran on the AWT thread -
+  without `core.windows`, `WindowManager.invokeWhenUIReady` falls back to `EventQueue.invokeLater`
+  as soon as the modules load - and created an `AbstractNode`, whose initialization needs its
+  superclass `Node`; at the same time the start-up thread (`project.libraries`' `LibrariesModule`)
+  was initializing `DataObject` → `Node`, whose `Node.EMPTY = new AbstractNode(...)` needs
+  `AbstractNode`. Each thread held one class's initialization and waited for the other's; the
+  start-up `main` thread and `lsp.client` were queued behind `DataObject`. The launcher now ships
+  `META-INF/namedservices/Modules/UIReady/java.lang.Runnable` with
+  `#-org.netbeans.core.ui.warmup.ContextMenuWarmUpTask`, which `MetaInfServicesLookup` honours
+  whatever the load order, so the task never runs; it only primed Swing popup menus the JavaFX
+  shell does not use. The other `core.ui` warm-ups (`MenuWarmUpTask`, `DnDWarmUpTask`,
+  `DiagnosticTask`, path `WarmUp`) run off the AWT thread after start-up and were left alone.
 
 ---
 
@@ -1562,6 +1576,109 @@ maximized state and splits the pane in the full layout.
   editor kind round trip), `check-purity` 0; docking, ui, launcher, findusages, findinprojects build.
   To check in `ant tryme`: the two header buttons, double-click, the slide bars while maximized,
   dragging a tab out of a maximized pane and restoring, Reset Windows, and a restart while maximized.
+
+---
+
+## 26. Navigator for XML, POM, CSS and Gradle files
+
+The Navigator window now has panels for the file types NetBeans' `xml.text`, `maven.grammar`,
+`maven` (`execute.navigator`), `css.editor` and `gradle` (`execute.navigator`) modules serve, each
+in a module of its own next to `nbfx.structure.java` (§23):
+
+- **`nbfx.structure.xml` (nbfx-ide) — XML View**, for `text/xml`, `application/xml` and every
+  `+xml` type (so a POM or an FXML file has it as its last panel). `XmlScanner` reads the structure
+  with the NetBeans XML lexer (`xml.lexer`, already used by the editor) into `XmlNode`s - elements,
+  processing instructions, DOCTYPE, CDATA, with offsets, attributes and text content - tolerating
+  an edited document: unclosed and stray tags are kept and marked, the rest keeps showing.
+  `XmlViewUI` shows the tree with the Swing icons (`tag`, `xml_declaration`, `doc_type`, `cdata`,
+  an error badge on the ancestors of a malformed element, the element itself in red), attributes in
+  grey and text content in parentheses, the two *Filters* toggles along the bottom (persisted), a
+  click moving the editor's caret to the node, double-click/Enter opening the file there, and the
+  caret's node kept selected. The module also resolves `.fxml` to `text/x-fxml+xml` (the type
+  NetBeans' JavaFX support gives it, which is not part of the application).
+- **`nbfx.structure.css` (nbfx-ide) — the CSS navigator** for `text/css`: `CssScanner` is a
+  tolerant pass over the sheet's tokens that yields what NetBeans' `CssStructureScanner` does -
+  rules by selector group, the classes, ids and element names the selectors use, at-rules and
+  imports - because `css.lib`'s parser is not public and runs on the Parsing API's snapshots rather
+  than the editor's text. The tokens come from `nbfx.api`'s new `css.CssTokens` (`apichanges`
+  `css.tokens`), the one CSS lexer of the application: Find Usages' `CssScanner` (classes, ids and
+  colours, every occurrence) reads the same tokens, so comments, strings, escapes and what counts as
+  a word are decided once. `CssStructureUI` shows one group row per
+  kind present (*Classes* and *Rules* for a JavaFX sheet; *Ids*, *Elements*, *At-Rules*, *Imports*
+  when there are any), items sorted by name as the CSL navigator sorts, no toolbar; double-click
+  opens the sheet at the item, the caret keeps its rule selected.
+- **`nbfx.structure.maven` (nbfx-java) — the POM panels**, for `text/x-maven-pom+xml`
+  (positions 100/110/120, before the XML View at 300):
+  - *POM model* (`PomModelUI`, `PomTreeBuilder`): the POM's elements in schema order merged with
+    the parents' as `POMModelVisitor` does - a row reads *Name : value* with the effective value,
+    italic when inherited, bold when the POM overrides a parent's, *<Undefined>* when no POM defines
+    it (hidden by the first toggle, "Show only POM elements defined in at least one place"); the
+    second toggle sorts list items by name; the `value`…`value4` icon tells how far up the lineage
+    the value comes from; the tooltip lists each POM's value. The lineage (`PomLineage`) reads the
+    POM itself from the editor's text with Maven's `MavenXpp3ReaderEx` (location tracking, unsaved
+    edits show; while the text is not well-formed the last tree stays) and the parents through the
+    embedder's `createModelLineage`, cached per file until the POM, its parent coordinates or a
+    parent file change; a parent that came from the local repository is located there. The raw
+    Maven model is used instead of NetBeans' XAM `POMModel`, which is Swing-document based: the
+    positions the reader records (right after an element's start tag) are mapped to the XML View's
+    elements by `PomLocator`, and container elements the reader records nothing for are found by
+    name under their parent's element. Double-click (or Enter) shows the element in the POM
+    defining it, *Show in POM ▸ Current / Parent: artifactId* picks the layer; the editor's caret
+    keeps the row of the element it is in selected.
+  - *POM inheritance* (`PomInheritanceUI`): the lineage, one row per POM as *artifactId - version*
+    with the Maven icon, *(read-only)* for a repository parent; double-click opens it.
+  - *Related goals* (`RelatedGoalsUI`, `MojoScanner`): the goals of the project's plugins, read
+    from each plugin's `META-INF/maven/plugin.xml` after resolving the artifact with the online
+    embedder, as *prefix **goal*** with the help (blue), lifecycle-bound (green cog) and plain
+    (orange cog) icons; the two toggles show help goals and lifecycle-bound ones (persisted under
+    `goalNavigator`, off by default as in NetBeans). Double-click, Enter or *Execute Goal* run the
+    fully qualified goal; *Show Documentation...* runs `help:describe -Dcmd=… -Ddetail=true`; both
+    through `BuildRunner.run(dir, console, starter)` (new in `nbfx.run`) and `MavenGoals.start`
+    (`nbfx.project.ui.maven`'s new public `api` package, which `MavenBuildActionProvider` now uses
+    too; it takes user properties). The list is read again when `NbMavenProject` reloads its model.
+    NetBeans' *Execute Goal With Modifiers...* (a Swing dialog) is not ported. The module is a friend
+    of `org.netbeans.modules.maven` and `maven.embedder` (their `project.xml`, as `project.ui.maven`).
+- **`nbfx.structure.gradle` (nbfx-java) — Related tasks**, for `text/x-gradle+x-groovy` and
+  `text/x-gradle+x-kotlin` (`build.gradle`, `build.gradle.kts`, `settings.gradle`…), after NetBeans'
+  `TasksNavigatorPanel`: a tree rooted at *Tasks of project* (Gradle icon) with one folder per task
+  group, sorted ignoring case, *Other Tasks* last for the tasks without a group, and the tasks sorted
+  by name under them (`TaskGroups`); the task's path and description make the tooltip. Double-click,
+  Enter or *Run Task* (the one context-menu item; NetBeans' *Execute Custom...* and favourites are
+  not ported) run the task by its path (`:sub:name`) from the build's root directory, so the wrapper
+  is found for a subproject too, through `BuildRunner.run` and `GradleTasks.start`
+  (`nbfx.project.ui.gradle`'s new public `api` package, where `GradleBuild` moved; the build
+  commands use it as well). The tasks come from `GradleBaseProject.getTasks()`, the model the
+  `org.netbeans.modules.gradle` module keeps (its `api` packages are public, no friend entry); a
+  project not yet evaluated - nothing ran its build script yet - is asked for `Quality.EVALUATED`
+  once, *Please Wait...* showing until the load completes (or fails) and the script is scanned again.
+  The tree is read again whenever `NbGradleProject` fires `PROP_PROJECT_INFO`; collapsed groups and
+  the selected task survive the rebuild. A script outside a Gradle project reads *Not a Gradle
+  project*. Icons: NetBeans' `gradle.png` and `gradle-task.gif` (16 px, no SVG exists) and a 64 px
+  render of `defaultFolder.svg`.
+- **Host changes in `nbfx.structure`.** The tracker plumbing of §23 moved up from the Java module and
+  became public, so every panel shares it: `ScanningPanel<R>` (`select(Object key)` generalizes the
+  Java `selectType`), `DocumentTracker<R>` (takes a `Predicate<FileObject>` for the files it feeds;
+  `pin(file, key)` / `unpin()` / `pinnedProperty()` generalize *Inspect Members*; `rescan()` for a
+  panel whose input changed aside from the text; `file()`), `TrackedStructurePanel<R>` (the base
+  the panels extend: lazy UI, tracker, `uiCreated`/`trackerCreated` hooks, `accepts(file)`),
+  `BackgroundScans.EXECUTOR`, `TreeScrolling`, `NavigatorButtons` (flat toggles, the bottom filter
+  bar) and `NavigatorIcons`; the generic rules of the Java `navigator.css` (header, tool buttons,
+  filter bar, empty label, `navigator-tree`/`navigator-cell`/`navigator-text`/`navigator-detail`/
+  `navigator-error`) moved to the window's own `navigator.css`, which `StructurePanel` loads, the
+  Java sheet keeping its member rules. `FxStructurePanel.handles(contentType)` (default: one of
+  `contentTypes()`) lets the XML View claim every `+xml` type. The panel selector is hidden when a
+  single panel serves the type, as `NavigatorTC` hides its, and the header row with it unless the
+  panel has a toolbar. `nbfx.structure` is 1.1, `nbfx.run` 1.1.
+- **Tests:** `XmlScannerTest` (7), `CssScannerTest` (6), `PomTreeBuilderTest` (4: merging by key,
+  packaging/modules of the POM alone, properties and configuration, locating rows in both POMs),
+  `TaskGroupsTest` (5: group and task order, the other group, capitalisation).
+  `check-purity` 0. To check in `ant tryme`: a POM's four panels and the caret sync between the XML
+  View / POM model and the editor, the FXML resolution (XML View on an `.fxml`), a CSS file,
+  *Execute Goal* / *Show Documentation* writing to the Output window, and a `build.gradle`'s task
+  tree filling after the project loads with *Run Task* writing to the Output window.
+- **Deferred:** *Execute Goal With Modifiers...*; an FX counterpart of the read-only editor NetBeans
+  opens for repository POMs (the file opens editable); the NetBeans XML navigator's incremental
+  updates (the tree is rebuilt 400 ms after an edit, expansion kept by element path).
 
 ---
 

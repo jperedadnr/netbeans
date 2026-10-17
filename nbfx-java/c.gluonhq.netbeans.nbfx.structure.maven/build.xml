@@ -1,0 +1,3 @@
+<project basedir="." default="build" name="nbfx-java/c.gluonhq.netbeans.nbfx.structure.maven">
+    <import file="../../nbbuild/templates/projectized.xml"/>
+</project>

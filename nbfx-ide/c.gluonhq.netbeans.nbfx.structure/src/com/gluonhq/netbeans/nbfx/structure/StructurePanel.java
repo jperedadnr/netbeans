@@ -40,9 +40,9 @@ import org.openide.util.NbPreferences;
 
 /**
  * The Navigator window's content: a header with the panel selector (one entry per
- * {@link FxStructurePanel} that handles the current content type) and the active panel's
- * {@linkplain FxStructurePanel#getToolbar() toolbar}, above the active panel's component - the
- * layout of the Swing {@code NavigatorTC}.
+ * {@link FxStructurePanel} that handles the current content type; hidden when there is a single
+ * panel, as the Swing {@code NavigatorTC} hides its) and the active panel's
+ * {@linkplain FxStructurePanel#getToolbar() toolbar}, above the active panel's component.
  * <p>
  * It follows the global action context: when the active file or editor document changes, it resolves
  * the panels for the new content type, activates the one selected last for that type (or keeps the
@@ -82,7 +82,8 @@ final class StructurePanel extends BorderPane {
         });
         selector.setFocusTraversable(false);
         selector.valueProperty().addListener((observable, old, now) -> activate(now));
-        header.getStyleClass().add("structure-header");
+        header.getStyleClass().addAll("structure-header", "navigator-header");
+        getStylesheets().add(Objects.requireNonNull(StructurePanel.class.getResource("navigator.css")).toExternalForm());
         setTop(header);
         setCenter(content);
         content.getChildren().add(empty);
@@ -113,8 +114,9 @@ final class StructurePanel extends BorderPane {
         List<FxStructurePanel> panels = panelsFor(contentType);
         selector.getItems().setAll(panels);
         boolean hasPanels = !panels.isEmpty();
-        header.setVisible(hasPanels);
-        header.setManaged(hasPanels);
+        // A single panel needs no selector: the header then only shows the panel's toolbar, if any.
+        selector.setVisible(panels.size() > 1);
+        selector.setManaged(panels.size() > 1);
         if (!hasPanels) {
             activate(null);
         } else if (active != null && panels.contains(active)) {
@@ -122,6 +124,14 @@ final class StructurePanel extends BorderPane {
         } else {
             selector.setValue(lastPanel(contentType, panels));
         }
+        updateHeader();
+    }
+
+    /** Shows the header while it has something to show: the selector of several panels, or the active panel's toolbar. */
+    private void updateHeader() {
+        boolean showHeader = active != null && (selector.isVisible() || activeToolbar != null);
+        header.setVisible(showHeader);
+        header.setManaged(showHeader);
     }
 
     /** Selects {@code panel} when it is one of the current content type's; see {@link StructureView#select}. */
@@ -154,6 +164,7 @@ final class StructurePanel extends BorderPane {
         }
         if (panel == null) {
             content.getChildren().setAll(empty);
+            updateHeader();
             return;
         }
         content.getChildren().setAll(panel.getComponent());
@@ -165,6 +176,7 @@ final class StructurePanel extends BorderPane {
         }
         HBox.setHgrow(selector, activeToolbar == null ? Priority.ALWAYS : Priority.NEVER);
         selector.setMaxWidth(activeToolbar == null ? Double.MAX_VALUE : Region.USE_COMPUTED_SIZE);
+        updateHeader();
         if (currentContentType != null) {
             prefs.put(LAST_PANEL + currentContentType, panel.getClass().getName());
         }
@@ -197,11 +209,8 @@ final class StructurePanel extends BorderPane {
         }
         List<FxStructurePanel> panels = new ArrayList<>();
         for (FxStructurePanel panel : Lookup.getDefault().lookupAll(FxStructurePanel.class)) {
-            for (String type : panel.contentTypes()) {
-                if (contentType.equals(type)) {
-                    panels.add(panel);
-                    break;
-                }
+            if (panel.handles(contentType)) {
+                panels.add(panel);
             }
         }
         return panels;

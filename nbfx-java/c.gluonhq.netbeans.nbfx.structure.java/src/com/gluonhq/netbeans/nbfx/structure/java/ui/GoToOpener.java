@@ -22,6 +22,7 @@ import com.gluonhq.netbeans.nbfx.api.ContentManager;
 import com.gluonhq.netbeans.nbfx.api.ErrorReporter;
 import com.gluonhq.netbeans.nbfx.api.editor.OpenSources;
 import com.gluonhq.netbeans.nbfx.api.elements.SourceLocation;
+import com.gluonhq.netbeans.nbfx.structure.BackgroundScans;
 import com.gluonhq.netbeans.nbfx.structure.java.model.GoToResolver;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public final class GoToOpener {
         OpenSources openSources = Lookup.getDefault().lookup(OpenSources.class);
         String text = openSources == null ? null : openSources.textOf(file);
         CompletableFuture<Boolean> opened = new CompletableFuture<>();
-        Background.EXECUTOR.execute(() -> {
+        BackgroundScans.EXECUTOR.execute(() -> {
             GoToResolver.Target target = null;
             Throwable failure = null;
             try {
@@ -94,7 +95,7 @@ public final class GoToOpener {
         // The sources of the open projects, searched whichever file the caret is in.
         List<FileObject> sourceRoots = new ArrayList<>(GlobalPathRegistry.getDefault().getSourceRoots());
         CompletableFuture<Boolean> opened = new CompletableFuture<>();
-        Background.EXECUTOR.execute(() -> {
+        BackgroundScans.EXECUTOR.execute(() -> {
             GoToResolver.Implementations implementations = null;
             Throwable failure = null;
             try {
@@ -142,7 +143,7 @@ public final class GoToOpener {
      */
     public static void offer(String title, List<GoToResolver.Implementation> items, Point2D anchor) {
         if (items.size() == 1) {
-            openImplementation(items.get(0));
+            openImplementation(items.getFirst());
         } else if (!items.isEmpty()) {
             ImplementationsPopup.show(title, items, anchor, GoToOpener::openImplementation);
         }
@@ -151,7 +152,7 @@ public final class GoToOpener {
     /** Opens {@code implementation} at its declaration, located in the background. FX thread. */
     public static void openImplementation(GoToResolver.Implementation implementation) {
         OpenSources openSources = Lookup.getDefault().lookup(OpenSources.class);
-        Background.EXECUTOR.execute(() -> {
+        BackgroundScans.EXECUTOR.execute(() -> {
             SourceLocation location = null;
             try {
                 location = GoToResolver.locate(implementation, openSources);
@@ -175,7 +176,7 @@ public final class GoToOpener {
     /** Runs {@code work} on the {@link Background} thread, completing the future with its result or its failure. */
     public static <T> CompletableFuture<T> inBackground(Work<T> work) {
         CompletableFuture<T> result = new CompletableFuture<>();
-        Background.EXECUTOR.execute(() -> {
+        BackgroundScans.EXECUTOR.execute(() -> {
             try {
                 result.complete(work.run());
             } catch (IOException | RuntimeException ex) {

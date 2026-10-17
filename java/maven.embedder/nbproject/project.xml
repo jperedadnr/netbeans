@@ -309,6 +309,7 @@
                 <package>org.apache.maven.wagon.shared.http</package>
                 <package>org.apache.maven.wagon.providers.http.wagon.shared</package>
                 <friend>com.gluonhq.netbeans.nbfx.project.ui.maven</friend>
+                <friend>com.gluonhq.netbeans.nbfx.structure.maven</friend>
             </friend-packages>
             <!-- TODO: DROP THIS BEGIN-->
             <class-path-extension>

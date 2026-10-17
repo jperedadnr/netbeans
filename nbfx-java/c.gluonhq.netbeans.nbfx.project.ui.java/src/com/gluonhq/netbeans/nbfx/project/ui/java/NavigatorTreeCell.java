@@ -56,7 +56,7 @@ abstract class NavigatorTreeCell<T> extends TreeCell<T> {
                     : new ArrayList<>(tree.getSelectionModel().getSelectedItems());
             ContextMenu contextMenu = factory.create(treeItem, selection);
             if (contextMenu != null) {
-                contextMenu.show(this, e.getScreenX(), e.getScreenY());
+                contextMenu.show(tree, e.getScreenX(), e.getScreenY());
             }
             e.consume();
         });

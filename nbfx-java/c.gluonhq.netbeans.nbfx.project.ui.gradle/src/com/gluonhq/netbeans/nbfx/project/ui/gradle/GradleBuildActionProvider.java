@@ -5,6 +5,7 @@ import com.gluonhq.netbeans.nbfx.project.ui.api.BuildCommands;
 import com.gluonhq.netbeans.nbfx.project.ui.api.BuildExecution;
 import com.gluonhq.netbeans.nbfx.project.ui.api.BuildOutput;
 import com.gluonhq.netbeans.nbfx.project.ui.api.BuildProgress;
+import com.gluonhq.netbeans.nbfx.project.ui.gradle.api.GradleTasks;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.List;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.openide.util.lookup.ServiceProvider;
 
-/** Gradle build commands, run in-process with the Gradle Tooling API (CLI fallback via gradlew). */
+/** Gradle build commands, run in-process through {@link GradleTasks} (CLI fallback via gradlew). */
 @ServiceProvider(service = BuildActionProvider.class)
 @ProjectServiceProvider(service = BuildActionProvider.class, projectType = "org-netbeans-modules-gradle")
 public final class GradleBuildActionProvider implements BuildActionProvider {
@@ -48,9 +49,7 @@ public final class GradleBuildActionProvider implements BuildActionProvider {
         if (tasks == null) {
             return null;
         }
-        GradleBuild build = new GradleBuild(dir, tasks, output, progress);
-        build.start();
-        return build;
+        return GradleTasks.start(dir, List.of(tasks), output, progress);
     }
 
     private static String[] tasks(String command) {

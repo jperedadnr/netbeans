@@ -22,6 +22,9 @@ import com.gluonhq.netbeans.nbfx.api.Cancellation;
 import com.gluonhq.netbeans.nbfx.api.actions.ElementContextMenuContributor;
 import com.gluonhq.netbeans.nbfx.api.elements.SourceLocation;
 import com.gluonhq.netbeans.nbfx.api.view.CellBreadth;
+import com.gluonhq.netbeans.nbfx.structure.ScanningPanel;
+import com.gluonhq.netbeans.nbfx.structure.TreeScrolling;
+import com.gluonhq.netbeans.nbfx.structure.java.model.InspectedType;
 import com.gluonhq.netbeans.nbfx.structure.java.model.MemberFilters;
 import com.gluonhq.netbeans.nbfx.structure.java.model.MemberFilters.Filter;
 import com.gluonhq.netbeans.nbfx.structure.java.model.MemberNode;
@@ -179,9 +182,20 @@ final class ClassMemberPanelUI extends BorderPane implements ScanningPanel<Membe
         TreeScrolling.scrollIntoView(tree, item);
     }
 
-    /** Selects the type row {@code qualifiedName} names: the root whose name is a segment of it, then the nested ones. */
+    /** Selects the row of the inspected type {@code key}; see {@link #selectType}. */
     @Override
-    public void selectType(String qualifiedName) {
+    public void select(Object key) {
+        if (key instanceof InspectedType type) {
+            selectType(type.getQualifiedName());
+        } else {
+            caretItem = null;
+            caretKey = null;
+            tree.getSelectionModel().clearSelection();
+        }
+    }
+
+    /** Selects the type row {@code qualifiedName} names: the root whose name is a segment of it, then the nested ones. */
+    void selectType(String qualifiedName) {
         String[] segments = qualifiedName.split("[.$]");
         TreeItem<MemberNode> found = null;
         for (int i = 0; i < segments.length && found == null; i++) {

@@ -20,7 +20,10 @@ package com.gluonhq.netbeans.nbfx.structure.java.ui;
 
 import com.gluonhq.netbeans.nbfx.api.ErrorReporter;
 import com.gluonhq.netbeans.nbfx.api.editor.OpenSources;
+import com.gluonhq.netbeans.nbfx.structure.BackgroundScans;
+import com.gluonhq.netbeans.nbfx.structure.DocumentTracker;
 import com.gluonhq.netbeans.nbfx.structure.FxStructurePanel;
+import com.gluonhq.netbeans.nbfx.structure.ScanningPanel;
 import com.gluonhq.netbeans.nbfx.structure.StructureView;
 import com.gluonhq.netbeans.nbfx.structure.java.model.InspectedType;
 import com.gluonhq.netbeans.nbfx.structure.java.model.MemberFilters;
@@ -84,7 +87,7 @@ public final class ClassMemberPanel extends JavaStructurePanel<MembersScanner.Re
 
     @Override
     protected void trackerCreated(DocumentTracker<MembersScanner.Result> tracker) {
-        tracker.inspectedProperty().subscribe(this::syncHistory);
+        tracker.pinnedProperty().subscribe(key -> syncHistory((InspectedType) key));
     }
 
     /**
@@ -106,9 +109,9 @@ public final class ClassMemberPanel extends JavaStructurePanel<MembersScanner.Re
                     return;
                 }
                 if (entry instanceof InspectedType type) {
-                    tracker().inspect(type);
+                    tracker().pin(type.file(), type);
                 } else {
-                    tracker().returnToAuto();
+                    tracker().unpin();
                 }
             });
             javadoc = new Button();
@@ -125,7 +128,7 @@ public final class ClassMemberPanel extends JavaStructurePanel<MembersScanner.Re
     /** Shows the file declaring {@code type}, its row selected, and records it in the history. FX thread. */
     public void inspect(InspectedType type) {
         inspectHistory.add(type);
-        tracker().inspect(type);
+        tracker().pin(type.file(), type);
     }
 
     /**
@@ -146,7 +149,7 @@ public final class ClassMemberPanel extends JavaStructurePanel<MembersScanner.Re
     private void inspect(FileObject file, Resolution resolution) {
         OpenSources openSources = Lookup.getDefault().lookup(OpenSources.class);
         String text = openSources == null ? null : openSources.textOf(file);
-        Background.EXECUTOR.execute(() -> {
+        BackgroundScans.EXECUTOR.execute(() -> {
             InspectedType type = null;
             Throwable failure = null;
             try {

@@ -10,9 +10,10 @@
 }
 
 .completion-popup-root > .completion-popup-list {
-    -fx-background-color: transparent;
+    -fx-background-color: white;
     -fx-background-insets: 0;
     -fx-padding: 0;
+    -fx-effect: null;
 }
 
 .completion-popup-root > .completion-popup-list > .placeholder > .completion-popup-placeholder {
@@ -58,16 +59,17 @@
 }
 
 .completion-popup-root > .completion-popup-list > .virtual-flow > .clipped-container > .sheet > .list-cell {
-    -fx-background-color: transparent;
+    -fx-background-color: white;
     -fx-padding: 0;
     -fx-text-fill: #1F2328;
     -fx-min-height: 24;
     -fx-pref-height: 24;
     -fx-max-height: 24;
+    -fx-selection-bar: #DCEBFA;
 }
 
 .completion-popup-root > .completion-popup-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled {
-    -fx-background-color: transparent;
+    -fx-background-color: white;
 }
 
 .completion-popup-root > .completion-popup-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:hover {

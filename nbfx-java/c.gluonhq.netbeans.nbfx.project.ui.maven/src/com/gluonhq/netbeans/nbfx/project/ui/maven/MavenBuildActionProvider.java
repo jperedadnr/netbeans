@@ -5,10 +5,12 @@ import com.gluonhq.netbeans.nbfx.project.ui.api.BuildCommands;
 import com.gluonhq.netbeans.nbfx.project.ui.api.BuildExecution;
 import com.gluonhq.netbeans.nbfx.project.ui.api.BuildOutput;
 import com.gluonhq.netbeans.nbfx.project.ui.api.BuildProgress;
+import com.gluonhq.netbeans.nbfx.project.ui.maven.api.MavenGoals;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.openide.util.lookup.ServiceProvider;
 
@@ -48,9 +50,7 @@ public final class MavenBuildActionProvider implements BuildActionProvider {
         if (goals == null) {
             return null;
         }
-        MavenBuild build = new MavenBuild(dir, goals, output, progress);
-        build.start();
-        return build;
+        return MavenGoals.start(dir, List.of(goals), Map.of(), output, progress);
     }
 
     private static String[] goals(String command) {

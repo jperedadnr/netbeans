@@ -21,6 +21,7 @@ package com.gluonhq.netbeans.nbfx.structure.java.ui;
 import com.gluonhq.netbeans.nbfx.api.ContentManager;
 import com.gluonhq.netbeans.nbfx.api.editor.OpenSources;
 import com.gluonhq.netbeans.nbfx.api.elements.SourceLocation;
+import com.gluonhq.netbeans.nbfx.structure.BackgroundScans;
 import com.gluonhq.netbeans.nbfx.structure.java.model.MemberNode;
 import com.gluonhq.netbeans.nbfx.structure.java.model.MembersScanner;
 import java.io.IOException;
@@ -64,7 +65,7 @@ final class MemberOpener {
             return CompletableFuture.completedFuture(null);
         }
         CompletableFuture<SourceLocation> location = new CompletableFuture<>();
-        Background.EXECUTOR.execute(() -> {
+        BackgroundScans.EXECUTOR.execute(() -> {
             FileObject source = SourceUtils.getFile(handle, result.classpath());
             if (source == null) {
                 LOG.log(Level.INFO, "No source for {0}", node.getText());

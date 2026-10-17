@@ -23,6 +23,8 @@ import com.gluonhq.netbeans.nbfx.api.ContentManager;
 import com.gluonhq.netbeans.nbfx.api.actions.ElementContextMenuContributor;
 import com.gluonhq.netbeans.nbfx.api.elements.SourceLocation;
 import com.gluonhq.netbeans.nbfx.api.view.CellBreadth;
+import com.gluonhq.netbeans.nbfx.structure.ScanningPanel;
+import com.gluonhq.netbeans.nbfx.structure.TreeScrolling;
 import com.gluonhq.netbeans.nbfx.structure.java.model.BeanPattern;
 import com.gluonhq.netbeans.nbfx.structure.java.model.BeanPatternsScanner;
 import java.io.IOException;

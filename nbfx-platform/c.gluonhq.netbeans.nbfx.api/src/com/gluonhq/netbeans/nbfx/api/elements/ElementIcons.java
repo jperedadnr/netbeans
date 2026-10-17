@@ -80,8 +80,8 @@ public final class ElementIcons {
                 case ANNOTATION, CLASS, OTHER, CONSTRUCTOR -> "class_16.png";
             };
             case VARIABLE, KEYWORD -> "localVariable.png";
-            case TAG -> "tag-16.png";
-            case RULE -> "style_sheet_16.png";
+            case TAG -> "tag.png";
+            case RULE -> "style_sheet.png";
             case SEPARATOR, OTHER -> null;
         };
     }

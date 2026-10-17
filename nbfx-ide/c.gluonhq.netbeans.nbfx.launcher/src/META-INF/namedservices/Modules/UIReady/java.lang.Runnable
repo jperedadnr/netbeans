@@ -1,0 +1,7 @@
+# Removes core.ui's Swing context-menu warm-up from the @OnShowing runnables (Modules/UIReady).
+# Without core.windows, WindowManager.invokeWhenUIReady runs them on the AWT thread as soon as the
+# modules load, and this one creates an AbstractNode there while the start-up thread may be
+# initializing DataObject -> Node (Node.EMPTY = new AbstractNode(...)): each thread then waits for
+# the other's class initialization and the application never comes up. The warm-up only primes
+# Swing popup menus the JavaFX shell does not use.
+#-org.netbeans.core.ui.warmup.ContextMenuWarmUpTask

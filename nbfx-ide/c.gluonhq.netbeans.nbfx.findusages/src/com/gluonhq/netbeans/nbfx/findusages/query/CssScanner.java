@@ -1,5 +1,7 @@
 package com.gluonhq.netbeans.nbfx.findusages.query;
 
+import com.gluonhq.netbeans.nbfx.api.css.CssTokens;
+import com.gluonhq.netbeans.nbfx.api.css.CssTokens.Token;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +19,7 @@ import javafx.scene.paint.Color;
  * <code>#</code>-prefixed words ids; a run ended by <code>;</code> or <code>}</code> is a
  * declaration, whose <code>#</code>-prefixed hex words after the colon are colours - as are the
  * plain words there naming one of JavaFX's {@link Color} constants ({@code white},
- * {@code transparent}), which NetBeans does not know. Comments and strings are skipped.
+ * {@code transparent}), which NetBeans does not know. The text is read through {@link CssTokens}.
  */
 final class CssScanner {
 
@@ -70,59 +72,43 @@ final class CssScanner {
         List<Symbol> symbols = new ArrayList<>();
         List<Pending> run = new ArrayList<>();
         boolean colonSeen = false;
-        int i = 0;
-        int length = source.length();
-        while (i < length) {
-            char c = source.charAt(i);
-            if (c == '/' && i + 1 < length && source.charAt(i + 1) == '*') {
-                int end = source.indexOf("*/", i + 2);
-                i = end < 0 ? length : end + 2;
-            } else if (c == '"' || c == '\'') {
-                i = skipString(source, i);
-            } else if (c == '{') {
-                for (Pending word : run) {
-                    if (word.prefix() == '\0') {
-                        continue;
+        for (Token token : CssTokens.tokenize(source)) {
+            switch (token.type()) {
+                case LBRACE -> {
+                    // The run was a selector: its classes and ids are symbols.
+                    for (Pending word : run) {
+                        if (word.prefix() != '\0') {
+                            symbols.add(new Symbol(word.prefix() == '.' ? Kind.CLASS : Kind.ID, word.name(), word.start(), word.end()));
+                        }
                     }
-                    symbols.add(new Symbol(word.prefix() == '.' ? Kind.CLASS : Kind.ID, word.name(), word.start(), word.end()));
+                    run.clear();
+                    colonSeen = false;
                 }
-                run.clear();
-                colonSeen = false;
-                i++;
-            } else if (c == '}' || c == ';') {
-                for (Pending word : run) {
-                    if (!word.afterColon()) {
-                        continue;
+                case RBRACE, SEMI -> {
+                    // The run was a declaration: the words of its value may be colours.
+                    for (Pending word : run) {
+                        if (!word.afterColon()) {
+                            continue;
+                        }
+                        if (word.prefix() == '#' && isHex(word.name())) {
+                            symbols.add(new Symbol(Kind.COLOR, word.name(), word.start(), word.end()));
+                        } else if (word.prefix() == '\0' && COLOR_NAMES.contains(word.name().toLowerCase(Locale.ROOT))) {
+                            symbols.add(new Symbol(Kind.NAMED_COLOR, word.name(), word.start(), word.end()));
+                        }
                     }
-                    if (word.prefix() == '#' && isHex(word.name())) {
-                        symbols.add(new Symbol(Kind.COLOR, word.name(), word.start(), word.end()));
-                    } else if (word.prefix() == '\0' && COLOR_NAMES.contains(word.name().toLowerCase(Locale.ROOT))) {
-                        symbols.add(new Symbol(Kind.NAMED_COLOR, word.name(), word.start(), word.end()));
+                    run.clear();
+                    colonSeen = false;
+                }
+                case COLON -> colonSeen = true;
+                case CLASS -> run.add(new Pending('.', token.text(), token.start(), token.end(), colonSeen));
+                case ID -> run.add(new Pending('#', token.text(), token.start(), token.end(), colonSeen));
+                case WORD -> {
+                    if (colonSeen) {
+                        run.add(new Pending('\0', token.text(), token.start(), token.end(), true));
                     }
                 }
-                run.clear();
-                colonSeen = false;
-                i++;
-            } else if (c == ':') {
-                colonSeen = true;
-                i++;
-            } else if ((c == '.' || c == '#') && i + 1 < length && isWordChar(source.charAt(i + 1))) {
-                int start = i;
-                i++;
-                while (i < length && isWordChar(source.charAt(i))) {
-                    i++;
+                default -> {
                 }
-                run.add(new Pending(c, source.substring(start + 1, i), start, i, colonSeen));
-            } else if (isWordChar(c)) {
-                int start = i;
-                while (i < length && isWordChar(source.charAt(i))) {
-                    i++;
-                }
-                if (colonSeen && !isNameChar(source, start - 1)) {
-                    run.add(new Pending('\0', source.substring(start, i), start, i, true));
-                }
-            } else {
-                i++;
             }
         }
         return symbols;
@@ -149,32 +135,5 @@ final class CssScanner {
             }
         }
         return true;
-    }
-
-    /** Whether the character at {@code index} continues a name, so a word after it is a sub-word (e.g. {@code -fx-white}). */
-    private static boolean isNameChar(String source, int index) {
-        return index >= 0 && (isWordChar(source.charAt(index)) || source.charAt(index) == '.' || source.charAt(index) == '#');
-    }
-
-    private static boolean isWordChar(char c) {
-        return Character.isLetterOrDigit(c) || c == '-' || c == '_';
-    }
-
-    /** The index after the string literal opening at {@code start}, honouring backslash escapes. */
-    private static int skipString(String source, int start) {
-        char quote = source.charAt(start);
-        int i = start + 1;
-        while (i < source.length()) {
-            char c = source.charAt(i);
-            if (c == '\\') {
-                i += 2;
-                continue;
-            }
-            if (c == quote || c == '\n') {
-                return i + 1;
-            }
-            i++;
-        }
-        return source.length();
     }
 }

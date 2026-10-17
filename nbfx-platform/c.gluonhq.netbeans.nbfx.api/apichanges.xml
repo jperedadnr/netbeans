@@ -161,6 +161,21 @@
             <class package="com.gluonhq.netbeans.nbfx.api.view" name="ActiveComponentContext"/>
             <class package="com.gluonhq.netbeans.nbfx.api.view" name="ViewSelectionContext"/>
         </change>
+        <change id="css.tokens">
+            <api name="netbeansfx_api"/>
+            <summary>CssTokens: one tokenizer for the CSS text the modules analyse</summary>
+            <version major="1" minor="0"/>
+            <date day="15" month="10" year="2026"/>
+            <author login="jpereda"/>
+            <compatibility addition="yes"/>
+            <description>
+                Adds <code>CssTokens</code>, which reads a style sheet into tokens (words, class and
+                id selectors, at-keywords, strings, punctuation) with their bounds, skipping comments
+                and surviving unterminated text. Find Usages' CSS symbols and the Navigator's CSS
+                structure are both read from these tokens instead of each module lexing the text.
+            </description>
+            <class package="com.gluonhq.netbeans.nbfx.api.css" name="CssTokens"/>
+        </change>
     </changes>
     <htmlcontents>
         <head>

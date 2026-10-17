@@ -86,7 +86,9 @@
                     </test-dependency>
                 </test-type>
             </test-dependencies>
-            <public-packages/>
+            <public-packages>
+                <package>com.gluonhq.netbeans.nbfx.project.ui.gradle.api</package>
+            </public-packages>
         </data>
     </configuration>
 </project>

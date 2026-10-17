@@ -1,0 +1,109 @@
+/* Navigator window */
+
+.navigator-view {
+    -fx-background-color: -fx-background;
+}
+
+.navigator-header {
+    -fx-padding: 3 4 3 4;
+    -fx-spacing: 4;
+    -fx-alignment: center-left;
+    -fx-border-color: transparent transparent #D9D9D9 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.navigator-header > .combo-box {
+    -fx-pref-height: 24;
+}
+
+.navigator-header > .navigator-tool-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 3;
+    -fx-content-display: graphic-only;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-pref-width: 24;
+    -fx-pref-height: 24;
+}
+.navigator-header > .navigator-tool-button:hover {
+    -fx-background-color: #E0E0E0;
+}
+.navigator-header > .navigator-tool-button:disabled {
+    -fx-opacity: 0.4;
+}
+
+.navigator-empty {
+    -fx-text-fill: derive(-fx-text-base-color, 40%);
+    -fx-padding: 12;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.navigator-tree {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.navigator-cell {
+    -fx-padding: 1 4 1 2;
+}
+
+.navigator-cell .navigator-text {
+    -fx-text-fill: -fx-text-base-color;
+}
+.navigator-cell .navigator-detail {
+    -fx-text-fill: #888888;
+}
+.navigator-cell .navigator-error {
+    -fx-text-fill: #D40000;
+    -fx-font-weight: bold;
+}
+
+.tool-bar.navigator-filters {
+    -fx-padding: 2 3 2 3;
+    -fx-spacing: 2;
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: #D9D9D9 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.tool-bar.navigator-filters > .container > .label {
+    -fx-padding: 0 4 0 2;
+}
+
+.tool-bar.navigator-filters > .container > .separator:vertical {
+    -fx-padding: 0 2 0 2;
+    -fx-pref-height: 20;
+}
+
+.tool-bar.navigator-filters > .container > .navigator-tool-button,
+.tool-bar.navigator-filters > .tool-bar-overflow-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 3;
+    -fx-content-display: graphic-only;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-pref-width: 24;
+    -fx-pref-height: 24;
+}
+
+.tool-bar.navigator-filters > .container > .navigator-tool-button:hover,
+.tool-bar.navigator-filters > .tool-bar-overflow-button:hover {
+    -fx-background-color: #E0E0E0;
+}
+
+.tool-bar.navigator-filters > .container > .navigator-tool-button:armed,
+.tool-bar.navigator-filters > .container > .navigator-tool-button:selected {
+    -fx-background-color: #D0D0D0;
+}
+
+.tool-bar.navigator-filters > .container > .navigator-tool-button:selected:hover {
+    -fx-background-color: #C4C4C4;
+}

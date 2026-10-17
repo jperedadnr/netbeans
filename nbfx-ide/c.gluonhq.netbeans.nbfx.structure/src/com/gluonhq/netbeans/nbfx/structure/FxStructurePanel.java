@@ -42,6 +42,22 @@ public interface FxStructurePanel {
     String[] contentTypes();
 
     /**
+     * Whether this panel shows the structure of files of {@code contentType}: by default one of its
+     * {@link #contentTypes()}. A panel for a family of types (the XML view, for any {@code +xml}
+     * type) overrides this.
+     *
+     * @since 1.0
+     */
+    default boolean handles(String contentType) {
+        for (String type : contentTypes()) {
+            if (type.equals(contentType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * The panel's content, suitable for adding to a scene graph. Must return the same node on every
      * call.
      */

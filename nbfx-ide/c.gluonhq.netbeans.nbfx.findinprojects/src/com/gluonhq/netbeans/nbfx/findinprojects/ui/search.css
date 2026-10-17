@@ -1,4 +1,4 @@
-/* Find in Projects: the dialog form and, below, the Search view with its results panes. */
+/* Find in Projects */
 
 .find-in-projects > .content {
     -fx-padding: 0;
@@ -8,7 +8,6 @@
     -fx-min-width: 520;
 }
 
-/* Containing Text: the field is the combo holding the text area, which fills it edge to edge. */
 .search-pane .search-text-combo {
     -fx-background-color: #C2C2C2, white;
     -fx-background-insets: 0, 1;
@@ -16,7 +15,6 @@
     -fx-padding: 1;
 }
 
-/* the area inside takes the focus, not the combo, so the field follows the area */
 .search-pane .search-text-combo:focus-within {
     -fx-background-color: #4D90FE, white;
 }
@@ -125,7 +123,7 @@
     -fx-text-fill: #C62828;
 }
 
-/* ---- Search view: inner result tabs, vertical tool bar, results table (PR 3) ---- */
+/* Search view */
 
 .search-empty {
     -fx-text-fill: derive(-fx-text-base-color, 40%);
@@ -164,7 +162,6 @@
     -fx-background-color: -fx-background;
 }
 
-/* The vertical tool bar: flat buttons, overflow menu when the pane is short. */
 .tool-bar.search-toolbar {
     -fx-padding: 3 2 3 2;
     -fx-spacing: 2;
@@ -221,7 +218,6 @@
     -fx-padding: 1 4 1 2;
 }
 
-/* Summary and detail rows are TextFlows (bold occurrence): their fill follows the table's text colours by hand. */
 .result-summary .result-text,
 .result-summary .result-occurrence,
 .result-line .result-text,
@@ -315,26 +311,6 @@
 .search-ignore-list .list-view:focus-within:focused {
     -fx-background-color: #4D90FE, white;
     -fx-background-insets: 0, 1;
-}
-
-.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:hover,
-.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:focused:filled,
-.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:focused:filled:hover,
-.search-ignore-list .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell:focused:filled {
-    -fx-text-fill: black;
-    -fx-background: transparent;
-    -fx-background-color: transparent;
-}
-
-.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
-.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:hover,
-.search-ignore-list .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:focused,
-.search-ignore-list .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
-.search-ignore-list .list-view:hover > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:focused {
-    -fx-text-fill: white;
-    -fx-background: #2775BF;
-    -fx-background-color: #2775BF;
-    -fx-background-insets: 0;
 }
 
 .search-pane.content > .text-input {

@@ -75,7 +75,7 @@ public final class NavigatorIcons {
             } else if ("md".equalsIgnoreCase(ext)) {
                 return "markdown.png";
             } else if ("css".equalsIgnoreCase(ext)) {
-                return "style_sheet_16.png";
+                return "style_sheet.png";
             } else if ("png".equalsIgnoreCase(ext) || "jpg".equalsIgnoreCase(ext) || "jpeg".equalsIgnoreCase(ext) || "gif".equalsIgnoreCase(ext) || "bmp".equalsIgnoreCase(ext)) {
                 return "imageObject.png";
             } else if ("properties".equalsIgnoreCase(ext)) {
